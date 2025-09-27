@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Retail Management Dashboard</title>
+    <link rel="stylesheet" href="../Dashboard/dashboard.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <div class="dashboard-container">
+        <nav class="sidebar">
+            <div class="logo">
+                <h2>RetailDash</h2>
+            </div>
+            <ul class="nav-menu">
+                <li class="nav-item active">
+                    <a href="#" class="nav-link">
+                        <span class="nav-icon">📊</span>
+                        <span class="nav-text">Dashboard</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="../Inventory/inventory.html" class="nav-link">
+                        <span class="nav-icon">📦</span>
+                        <span class="nav-text">Inventory</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="#" class="nav-link">
+                        <span class="nav-icon">🏪</span>
+                        <span class="nav-text">Retail Management</span>
+                    </a>
+                </li>
+            </ul>
+        </nav>
+
+        <main class="main-content">
+            <div class="page-header">
+                <div class="header-left">
+                    <h1>Dashboard Overview</h1>
+                    <p>Real-time business metrics and alerts</p>
+                </div>
+                <button id="recordSaleBtn" class="record-sale-btn">
+                    <span class="btn-icon">🛒</span> Record Sale
+                </button>
+            </div>
+
+            <div id="saleModal" class="modal">
+                <div class="modal-content">
+                    <span class="close-btn">&times;</span>
+                    <div id="formView">
+                        <h3>Record New Sale</h3>
+                        <p>Select product and quantity to process sale</p>
+                        <form id="saleForm">
+                            <div class="form-group">
+                                <label for="productSelect">Product</label>
+                                <select id="productSelect">
+                                    <option value="">Select a product</option>
+                                    <option value="Wireless Earbuds">Wireless Earbuds</option>
+                                    <option value="Smartphone">Smartphone</option>
+                                    <option value="Fitness Tracker">Fitness Tracker</option>
+                                    <option value="Tablet">Tablet</option>
+                                    <option value="Bluetooth Speaker">Bluetooth Speaker</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="quantityInput">Quantity</label>
+                                <input type="number" id="quantityInput" value="1" min="1">
+                            </div>
+                            <button type="submit" class="process-sale-btn">Process Sale</button>
+                        </form>
+                    </div>
+                    <div id="confirmationView" class="hidden">
+                        <h3>Sale Recorded</h3>
+                        <p id="confirmationMessage"></p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="top-row">
+                <div class="metric-card">
+                    <div class="metric-icon">📦</div>
+                    <h3>Total Products</h3>
+                    <p class="metric-value">1,245</p>
+                    <span class="metric-change positive">+12%</span>
+                </div>
+
+                <div class="metric-card">
+                    <div class="metric-icon">💰</div>
+                    <h3>Total Sales</h3>
+                    <p class="metric-value">₹3,75,678</p>
+                    <span class="metric-change positive">+8%</span>
+                </div>
+
+                <div class="metric-card">
+                    <div class="metric-icon">📈</div>
+                    <h3>Total Revenue</h3>
+                    <p class="metric-value">₹10,54,50,000</p>
+                    <span class="metric-change positive">+15%</span>
+                </div>
+
+                <div class="metric-card alert">
+                    <div class="metric-icon">⚠️</div>
+                    <h3>Low Stock Alerts</h3>
+                    <p class="metric-value">23</p>
+                    <span class="metric-change negative">+5</span>
+                </div>
+            </div>
+
+            <div class="middle-row">
+                <div class="section-card">
+                    <h3>Recent Purchases</h3>
+                    <div class="purchase-list">
+                        <div class="purchase-item">
+                            <span class="purchase-name">Wireless Headphones</span>
+                            <span class="purchase-date">Today, 10:30 AM</span>
+                            <span class="purchase-amount">₹7,499</span>
+                        </div>
+                        <div class="purchase-item">
+                            <span class="purchase-name">Smart Watch</span>
+                            <span class="purchase-date">Today, 9:15 AM</span>
+                            <span class="purchase-amount">₹16,499</span>
+                        </div>
+                        <div class="purchase-item">
+                            <span class="purchase-name">Laptop Charger</span>
+                            <span class="purchase-date">Yesterday, 4:45 PM</span>
+                            <span class="purchase-amount">₹3,699</span>
+                        </div>
+                        <div class="purchase-item">
+                            <span class="purchase-name">Phone Case</span>
+                            <span class="purchase-date">Yesterday, 2:20 PM</span>
+                            <span class="purchase-amount">₹1,999</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="section-card">
+                    <h3>Top Selling Products</h3>
+                    <div class="product-list">
+                        <div class="product-item">
+                            <span class="product-rank">1</span>
+                            <span class="product-name">Wireless Earbuds</span>
+                            <span class="product-sales">245 units</span>
+                        </div>
+                        <div class="product-item">
+                            <span class="product-rank">2</span>
+                            <span class="product-name">Smartphone</span>
+                            <span class="product-sales">189 units</span>
+                        </div>
+                        <div class="product-item">
+                            <span class="product-rank">3</span>
+                            <span class="product-name">Fitness Tracker</span>
+                            <span class="product-sales">156 units</span>
+                        </div>
+                        <div class="product-item">
+                            <span class="product-rank">4</span>
+                            <span class="product-name">Tablet</span>
+                            <span class="product-sales">134 units</span>
+                        </div>
+                        <div class="product-item">
+                            <span class="product-rank">5</span>
+                            <span class="product-name">Bluetooth Speaker</span>
+                            <span class="product-sales">98 units</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bottom-row">
+                <div class="section-card chart-section">
+                    <div class="chart-header">
+                        <h3>Performance Analytics</h3>
+                        <div class="chart-toggle">
+                            <button class="toggle-btn active" data-chart="sales">Sales Trend</button>
+                            <button class="toggle-btn" data-chart="products">Product Performance</button>
+                        </div>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="salesChart" class="chart"></canvas>
+                        <canvas id="productChart" class="chart"></canvas>
+                    </div>
+                </div>
+
+                <div class="section-card alerts-section">
+                    <h3>Stock Alerts</h3>
+                    <div class="alerts-list">
+                        <div class="alert-item critical">
+                            <span class="alert-icon">🔴</span>
+                            <span class="alert-text">Wireless Earbuds: Only 3 left in stock</span>
+                        </div>
+                        <div class="alert-item warning">
+                            <span class="alert-icon">🟡</span>
+                            <span class="alert-text">Smartphone Case: Stock below 20 units</span>
+                        </div>
+                        <div class="alert-item warning">
+                            <span class="alert-icon">🟡</span>
+                            <span class="alert-text">Laptop Charger: Reorder point reached</span>
+                        </div>
+                        <div class="alert-item info">
+                            <span class="alert-icon">🟢</span>
+                            <span class="alert-text">Tablet: Stock monitoring required</span>
+                        </div>
+                        <div class="alert-item info">
+                            <span class="alert-icon">🟢</span>
+                            <span class="alert-text">Bluetooth Speaker: Below optimal level</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="../Dashboard/dashboard.js"></script>
+</body>
+</html>

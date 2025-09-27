@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Inventory Management</title>
+    <link rel="stylesheet" href="../Inventory/inventory.css">
+</head>
+<body>
+    <div class="dashboard-container">
+        <nav class="sidebar">
+            <div class="logo">
+                <h2>RetailDash</h2>
+            </div>
+            <ul class="nav-menu">
+                <li class="nav-item">
+                    <a href="..//Dashboard/dashboard.html" class="nav-link">
+                        <span class="nav-icon">📊</span>
+                        <span class="nav-text">Dashboard</span>
+                    </a>
+                </li>
+                <li class="nav-item active">
+                    <a href="#" class="nav-link">
+                        <span class="nav-icon">📦</span>
+                        <span class="nav-text">Inventory</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="#" class="nav-link">
+                        <span class="nav-icon">🏪</span>
+                        <span class="nav-text">Retailer Management</span>
+                    </a>
+                </li>
+            </ul>
+        </nav>
+
+        <main class="main-content">
+            <div class="section-card inventory-header">
+                <h3>Inventory Management</h3>
+                <button class="add-product-btn">+ Add Product</button>
+            </div>
+
+            <div class="section-card">
+                <table class="inventory-table">
+                    <thead>
+                        <tr>
+                            <th>Product ID</th>
+                            <th>Product Name</th>
+                            <th>Category</th>
+                            <th>Stock</th>
+                            <th>Price</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>#101</td>
+                            <td>Wireless Headphones</td>
+                            <td>Electronics</td>
+                            <td>34</td>
+                            <td>₹7,499</td>
+                            <td><span class="status in-stock">In Stock</span></td>
+                        </tr>
+                        <tr>
+                            <td>#102</td>
+                            <td>Smart Watch</td>
+                            <td>Electronics</td>
+                            <td>12</td>
+                            <td>₹16,499</td>
+                            <td><span class="status low-stock">Low Stock</span></td>
+                        </tr>
+                        <tr>
+                            <td>#103</td>
+                            <td>Laptop Charger</td>
+                            <td>Accessories</td>
+                            <td>0</td>
+                            <td>₹3,699</td>
+                            <td><span class="status out-stock">Out of Stock</span></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </main>
+    </div>
+
+    <div id="productModal" class="modal">
+        <div class="modal-content">
+            <span class="close-btn">&times;</span>
+            <div class="modal-header">
+                <h3>Add New Product</h3>
+                <p>Enter product details to add to inventory</p>
+            </div>
+            <form id="productForm">
+                <div class="form-group">
+                    <label for="productName">Product Name</label>
+                    <input type="text" id="productName" placeholder="Enter product name" required>
+                </div>
+                <div class="form-group">
+                    <label for="category">Category</label>
+                    <input type="text" id="category" placeholder="Enter product category" required>
+                </div>
+                <div class="form-group-row">
+                    <div class="form-group">
+                        <label for="price">Price (₹)</label>
+                        <input type="number" id="price" value="0" min="0" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="stock">Stock</label>
+                        <input type="number" id="stock" value="0" min="0" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="minStock">Min Stock</label>
+                        <input type="number" id="minStock" value="5" min="0" required>
+                    </div>
+                </div>
+                <button type="submit" class="add-product-modal-btn">Add Product</button>
+            </form>
+        </div>
+    </div>
+
+    <script src="../Inventory/inventory.js"></script>
+</body>
+</html>
