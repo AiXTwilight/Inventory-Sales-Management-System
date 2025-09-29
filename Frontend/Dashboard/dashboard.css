@@ -246,7 +246,6 @@ body {
     justify-content: space-between;
     align-items: center;
     padding: 16px 0; /* Increased padding */
-    border-bottom: 1px solid #ecf0f1;
     min-height: 52px; /* Increased height for better spacing */
 }
 
@@ -321,9 +320,9 @@ body {
     color: #7f8c8d;
     font-size: 0.8rem;
     line-height: 1.2;
-    height: 16px; /* Fixed height for date line */
+    min-height: 20px; /* Fixed height for date line */
     display: flex;
-    align-items: center;
+    align-items:center;
     width: 100%;
 }
 
