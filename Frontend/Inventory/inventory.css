@@ -10,6 +10,7 @@ body {
     background-color: #f5f6fa;
     color: #333;
     line-height: 1.6;
+    overflow: hidden;
 }
 
 .dashboard-container {
@@ -22,20 +23,21 @@ body {
     width: 250px;
     background: linear-gradient(180deg, #2c3e50 0%, #34495e 100%);
     color: white;
-    padding: 20px 0;
+    padding: 15px 0;
     position: fixed;
     height: 100vh;
     overflow-y: auto;
+    flex-shrink: 0;
 }
 
 .logo {
-    padding: 0 20px 20px;
+    padding: 0 20px 15px;
     border-bottom: 1px solid #4a6572;
-    margin-bottom: 20px;
+    margin-bottom: 15px;
 }
 
 .logo h2 {
-    font-size: 1.5rem;
+    font-size: 1.3rem;
     font-weight: 600;
 }
 
@@ -45,13 +47,13 @@ body {
 }
 
 .nav-item {
-    margin-bottom: 5px;
+    margin-bottom: 3px;
 }
 
 .nav-link {
     display: flex;
     align-items: center;
-    padding: 15px 20px;
+    padding: 12px 20px;
     color: #bdc3c7;
     text-decoration: none;
     transition: all 0.3s ease;
@@ -69,14 +71,15 @@ body {
 }
 
 .nav-icon {
-    font-size: 1.2rem;
-    margin-right: 15px;
-    width: 20px;
+    font-size: 1.1rem;
+    margin-right: 12px;
+    width: 18px;
     text-align: center;
 }
 
 .nav-text {
     font-weight: 500;
+    font-size: 0.9rem;
 }
 
 /* Main Content */
