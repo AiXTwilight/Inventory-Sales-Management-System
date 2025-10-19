@@ -21,7 +21,7 @@ body {
 /* === Sidebar === */
 .sidebar {
     width: 250px;
-    background: linear-gradient(180deg, #2c3e50 0%, #34495e 100%);
+    background: linear-gradient(180deg, #8e7cc3 0%, #a18fcf 100%);
     color: white;
     padding: 15px 0;
     height: 100vh;
@@ -31,7 +31,7 @@ body {
 
 .logo {
     padding: 0 20px 15px;
-    border-bottom: 1px solid #4a6572;
+    border-bottom: 1px solid #b7a2db;
     margin-bottom: 15px;
 }
 
@@ -53,20 +53,20 @@ body {
     display: flex;
     align-items: center;
     padding: 12px 20px;
-    color: #bdc3c7;
+    color: #ddd6f7;
     text-decoration: none;
     transition: all 0.3s ease;
 }
 
 .nav-link:hover {
-    background-color: #34495e;
+    background-color: #a18fcf;
     color: white;
 }
 
 .nav-item.active .nav-link {
-    background-color: #3498db;
+    background-color: #b7a2db;
     color: white;
-    border-left: 4px solid #2980b9;
+    border-left: 4px solid #8e7cc3;
 }
 
 .nav-icon {
@@ -143,7 +143,7 @@ body {
 .metric-icon {
     font-size: 1.4rem;
     margin-bottom: 6px;
-    color: #3498db;
+    color: #8e7cc3;
 }
 
 .metric-card h3 {
@@ -246,12 +246,12 @@ body {
 
 .purchase-amount {
     font-weight: 600;
-    color: #27ae60;
+    color: #2c3e50;
     font-size: 0.95rem;
 }
 
 .product-rank {
-    background: #3498db;
+    background: #8e7cc3;
     color: white;
     width: 24px;
     height: 24px;
@@ -286,7 +286,6 @@ body {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 15px;
     flex-shrink: 0;
 }
 
@@ -296,15 +295,24 @@ body {
     font-weight: 600;
 }
 
+.chart-card h3 {
+    font-size: 1.15rem;
+    color: #2c3e50;
+    margin-bottom: 16px;
+    font-weight: 600;
+    padding-bottom: 8px;
+    flex-shrink: 0;
+}
+
 .chart-toggle {
     display: flex;
-    background: #ecf0f1;
+    background: #d8c1e3;
     border-radius: 6px;
     padding: 3px;
 }
 
 .toggle-btn {
-    padding: 8px 14px;
+    padding: 5px 11px;
     border: none;
     background: transparent;
     border-radius: 4px;
@@ -315,7 +323,7 @@ body {
 }
 
 .toggle-btn.active {
-    background: #3498db;
+    background: #8e7cc3;
     color: white;
 }
 
@@ -323,13 +331,13 @@ body {
     position: relative;
     flex: 1;
     min-height: 0;
-    background: #f8f9fa;
+    background: transparent;
     border-radius: 6px;
-    border: 1px solid #e9ecef;
+    border: none;
     display: flex;
     align-items: center;
     justify-content: center;
-    color: #6c757d;
+    color: #8e7cc3;
     font-size: 0.9rem;
 }
 
@@ -384,7 +392,7 @@ body {
 .alert-item:hover { transform: translateX(2px); }
 
 .alert-item.critical { background: #ffebee; border-left: 4px solid #e74c3c; }
-.alert-item.warning { background: #fff8e1; border-left: 4px solid #f39c12; }
+.alert-item.warning { background: #fff8e1; border-left: 4px solid #efba65; }
 .alert-item.info { background: #e8f5e8; border-left: 4px solid #27ae60; }
 
 .alert-icon { font-size: 1rem; flex-shrink: 0; margin-top: 1px; }
@@ -459,7 +467,7 @@ body {
 .process-sale-btn {
     width: 100%;
     padding: 10px;
-    background-color: #3498db;
+    background-color: #8e7cc3;
     color: white;
     border: none;
     border-radius: 6px;
@@ -469,10 +477,10 @@ body {
     transition: background-color 0.3s ease;
 }
 
-.process-sale-btn:hover { background-color: #2980b9; }
+.process-sale-btn:hover { background-color: #7b6bb0; }
 
 #confirmationView { text-align: center; }
-#confirmationView h3 { color: #2ecc71; }
+#confirmationView h3 { color: #b39ddb; }
 .hidden { display: none; }
 
 /* === Responsive Design === */

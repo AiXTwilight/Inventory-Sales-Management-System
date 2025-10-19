@@ -20,62 +20,67 @@
                     </a>
                 </li>
                 <li class="nav-item active">
-                    <a href="#" class="nav-link">
+                    <a href="../Retail Management/rm.html" class="nav-link">
                         <span class="nav-icon">📦</span>
                         <span class="nav-text">Inventory</span>
                     </a>
                 </li>
                 <li class="nav-item">
-                    <a href="#" class="nav-link">
+                    <a href="../Retail Management/rm.html" class="nav-link">
                         <span class="nav-icon">🏪</span>
-                        <span class="nav-text">Retailer Management</span>
+                        <span class="nav-text">Retail Management</span>
                     </a>
                 </li>
             </ul>
         </nav>
 
         <main class="main-content">
-            <div class="section-card inventory-header">
+            <div class="inventory-header">
                 <h3>Inventory Management</h3>
-                <button class="add-product-btn">+ Add Product</button>
             </div>
 
             <div class="section-card">
                 <table class="inventory-table">
                     <thead>
                         <tr>
-                            <th>Product ID</th>
-                            <th>Product Name</th>
-                            <th>Category</th>
-                            <th>Stock</th>
-                            <th>Price</th>
-                            <th>Status</th>
+                            <th class="col-id">Product ID</th>
+                            <th class="col-name">Product Name</th>
+                            <th class="col-category">Category</th>
+                            <th class="col-stock">Stock</th>
+                            <th class="col-price">Price</th>
+                            <th class="col-status">Status</th>
                         </tr>
                     </thead>
-                    <tbody>
-                        <tr>
+                    <tbody id="inventoryTableBody">
+                        <tr data-product-id="101" data-min-stock="5"> 
                             <td>#101</td>
                             <td>Wireless Headphones</td>
                             <td>Electronics</td>
-                            <td>34</td>
+                            <td data-stock="34">34</td>
                             <td>₹7,499</td>
-                            <td><span class="status in-stock">In Stock</span></td>
+                            <td class="status-col">
+                                <button class="status-btn status in-stock" data-status-code="in-stock">In Stock</button>
+                            </td>
                         </tr>
-                        <tr>
+                        <tr data-product-id="102" data-min-stock="15">
                             <td>#102</td>
                             <td>Smart Watch</td>
                             <td>Electronics</td>
-                            <td>12</td>
+                            <td data-stock="12">12</td>
                             <td>₹16,499</td>
-                            <td><span class="status low-stock">Low Stock</span></td>
+                            <td class="status-col">
+                                <button class="status-btn status low-stock" data-status-code="low-stock">Low Stock</button>
+                            </td>
                         </tr>
-                        <tr>
+                        <tr data-product-id="103" data-min-stock="10">
                             <td>#103</td>
                             <td>Laptop Charger</td>
                             <td>Accessories</td>
-                            <td>0</td>
+                            <td data-stock="0">0</td>
                             <td>₹3,699</td>
-                            <td><span class="status out-stock">Out of Stock</span></td>
+                            <td class="status-col">
+                                <button class="status-btn status out-stock" data-status-code="out-stock">Out of Stock</button>
+                            </td>
                         </tr>
                     </tbody>
                 </table>
@@ -83,37 +88,29 @@
         </main>
     </div>
 
-    <div id="productModal" class="modal">
+    <div id="statusModal" class="modal">
         <div class="modal-content">
-            <span class="close-btn">&times;</span>
+            <span class="close-btn-new">&times;</span>
             <div class="modal-header">
-                <h3>Add New Product</h3>
-                <p>Enter product details to add to inventory</p>
+                <h3 id="modalProductId">Update Stock for #101</h3>
+                <p>Adjust current stock level and update product status.</p>
             </div>
-            <form id="productForm">
-                <div class="form-group">
-                    <label for="productName">Product Name</label>
-                    <input type="text" id="productName" placeholder="Enter product name" required>
-                </div>
-                <div class="form-group">
-                    <label for="category">Category</label>
-                    <input type="text" id="category" placeholder="Enter product category" required>
-                </div>
+            <form id="statusForm">
+                <input type="hidden" id="currentProductId">
+                <input type="hidden" id="currentMinStock">
+
                 <div class="form-group-row">
                     <div class="form-group">
-                        <label for="price">Price (₹)</label>
-                        <input type="number" id="price" value="0" min="0" required>
+                        <label for="currentStockDisplay">Current Stock</label>
+                        <input type="text" id="currentStockDisplay" value="" disabled>
                     </div>
                     <div class="form-group">
-                        <label for="stock">Stock</label>
-                        <input type="number" id="stock" value="0" min="0" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="minStock">Min Stock</label>
-                        <input type="number" id="minStock" value="5" min="0" required>
+                        <label for="stockAdjustment">Stock Update</label>
+                        <input type="number" id="stockAdjustment" value="0" placeholder="e.g. 10 (Add) or -5 (Subtract)">
                     </div>
                 </div>
-                <button type="submit" class="add-product-modal-btn">Add Product</button>
+
+                <button type="submit" class="update-status-modal-btn">Apply Stock & Update Status</button>
             </form>
         </div>
     </div>

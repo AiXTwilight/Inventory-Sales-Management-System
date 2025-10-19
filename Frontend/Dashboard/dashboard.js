@@ -21,6 +21,11 @@ function updateChart(chartType) {
     // Add the new canvas to the container
     chartContainer.appendChild(newCanvas);
     
+    // Define your primary purple color
+    const primaryPurple = '#8e7cc3'; // From your sidebar gradient start
+    const lightPurple = '#a18fcf'; // From your sidebar gradient end
+    const veryLightPurple = 'rgba(177, 162, 219, 0.2)'; // A very light, transparent purple for fill
+
     // Initialize the chart based on the type
     if (chartType === 'sales') {
         const salesCtx = newCanvas.getContext('2d');
@@ -31,8 +36,8 @@ function updateChart(chartType) {
                 datasets: [{
                     label: 'Sales (₹)',
                     data: [950000, 1520000, 1200000, 2000000, 1760000, 2400000, 2240000, 2800000, 2560000, 3200000, 3040000, 3600000],
-                    borderColor: '#3498db',
-                    backgroundColor: 'rgba(52, 152, 219, 0.1)',
+                    borderColor: primaryPurple, // Changed to primary purple
+                    backgroundColor: veryLightPurple, // Light, transparent purple for fill
                     borderWidth: 3,
                     fill: true,
                     tension: 0.4
@@ -76,18 +81,18 @@ function updateChart(chartType) {
                     label: 'Units Sold',
                     data: [245, 189, 156, 134, 98],
                     backgroundColor: [
-                        'rgba(52, 152, 219, 0.8)',
-                        'rgba(46, 204, 113, 0.8)',
-                        'rgba(155, 89, 182, 0.8)',
-                        'rgba(241, 196, 15, 0.8)',
-                        'rgba(230, 126, 34, 0.8)'
+                        primaryPurple, // All bars will be this primary purple
+                        lightPurple,
+                        primaryPurple,
+                        lightPurple,
+                        primaryPurple
                     ],
                     borderColor: [
-                        '#3498db',
-                        '#2ecc71',
-                        '#9b59b6',
-                        '#f1c40f',
-                        '#e67e22'
+                        primaryPurple, // Borders match the fill color
+                        lightPurple,
+                        primaryPurple,
+                        lightPurple,
+                        primaryPurple
                     ],
                     borderWidth: 1
                 }]
@@ -168,21 +173,31 @@ document.addEventListener('DOMContentLoaded', function() {
         const revenue = Math.floor(Math.random() * 1000000) + 10545000;
         metrics[2].textContent = '₹' + revenue.toLocaleString('en-IN');
         
-        // Update low stock alerts
-        const alerts = Math.floor(Math.random() * 10) + 20;
-        metrics[3].textContent = alerts;
-        
-        // Update change indicators
-        changes.forEach(change => {
-            const isPositive = Math.random() > 0.3;
-            const value = Math.floor(Math.random() * 10) + 1;
+        // Update Products Sold Today (example, assuming this is metrics[4])
+        const productsSoldToday = Math.floor(Math.random() * 10) + 8; // Random between 8 and 17
+        metrics[4].textContent = productsSoldToday;
+
+
+        // Update change indicators for Sales and Revenue
+        // Assuming metrics[1] is Total Sales and metrics[2] is Total Revenue
+        const salesChange = changes[0]; // For Total Sales
+        const revenueChange = changes[1]; // For Total Revenue
+
+        function updateChange(changeElement) {
+            const isPositive = Math.random() > 0.3; // 70% chance of positive
+            const value = (Math.random() * 5 + 1).toFixed(0); // 1-5%
             
-            change.textContent = (isPositive ? '+' : '-') + value + '%';
-            change.className = 'metric-change ' + (isPositive ? 'positive' : 'negative');
-        });
+            changeElement.textContent = (isPositive ? '+' : '-') + value + '%';
+            changeElement.className = 'metric-change ' + (isPositive ? 'positive' : 'negative');
+        }
+
+        updateChange(salesChange);
+        updateChange(revenueChange);
     }
     
-    setInterval(updateMetrics, 30000);
+    // Call updateMetrics immediately and then every 30 seconds
+    updateMetrics(); 
+    setInterval(updateMetrics, 30000); 
     
     // Add some interactive elements
     const metricCards = document.querySelectorAll('.metric-card');
@@ -196,7 +211,11 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     // Modal and Sale Logic
-    const recordSaleBtn = document.getElementById('recordSaleBtn');
+    // There is no 'recordSaleBtn' in your HTML. Assuming this functionality
+    // might be triggered by a metric card or an external button.
+    // For now, I'm commenting out the recordSaleBtn event listener
+    // or you can add a button with id="recordSaleBtn" in your HTML.
+    // const recordSaleBtn = document.getElementById('recordSaleBtn'); 
     const saleModal = document.getElementById('saleModal');
     const closeBtn = document.querySelector('.close-btn');
     const saleForm = document.getElementById('saleForm');
@@ -206,12 +225,12 @@ document.addEventListener('DOMContentLoaded', function() {
     const productSelect = document.getElementById('productSelect');
     const quantityInput = document.getElementById('quantityInput');
 
-    // Show the modal when the "Record Sale" button is clicked
-    recordSaleBtn.addEventListener('click', function() {
-        saleModal.style.display = 'flex';
-        formView.classList.remove('hidden');
-        confirmationView.classList.add('hidden');
-    });
+    // If you add a button with id="recordSaleBtn", uncomment this:
+    // recordSaleBtn.addEventListener('click', function() {
+    //     saleModal.style.display = 'flex';
+    //     formView.classList.remove('hidden');
+    //     confirmationView.classList.add('hidden');
+    // });
 
     // Close the modal when the close button is clicked
     closeBtn.addEventListener('click', function() {
@@ -232,16 +251,34 @@ document.addEventListener('DOMContentLoaded', function() {
         event.preventDefault();
 
         const selectedProduct = productSelect.value;
-        const quantity = quantityInput.value;
+        const quantity = parseInt(quantityInput.value); // Parse to integer
 
         if (selectedProduct && quantity > 0) {
-            const message = `Sold ${quantity} x ${selectedProduct}`;
+            const message = `Sold ${quantity} x ${selectedProduct}.`;
             confirmationMessage.textContent = message;
             formView.classList.add('hidden');
             confirmationView.classList.remove('hidden');
 
-            // You can add logic here to update your dashboard metrics
-            // (e.g., increase total sales, update recent purchases, etc.)
+            // --- Add logic here to update your dashboard metrics ---
+            // Example: Update "Products Sold Today"
+            const productsSoldTodayMetric = document.querySelectorAll('.metric-value')[4]; // Assuming it's the 5th metric
+            let currentProductsSold = parseInt(productsSoldTodayMetric.textContent);
+            productsSoldTodayMetric.textContent = (currentProductsSold + quantity).toLocaleString('en-IN');
+
+            // Example: Update "Today's Sale" (assuming a dummy price)
+            const todaySaleMetric = document.querySelectorAll('.metric-value')[3]; // Assuming it's the 4th metric
+            const dummyPriceMap = { // You'll need actual prices from your inventory
+                "Wireless Earbuds": 7499,
+                "Smartphone": 16499,
+                "Fitness Tracker": 3699,
+                "Tablet": 12000, // Dummy
+                "Bluetooth Speaker": 2500 // Dummy
+            };
+            const itemPrice = dummyPriceMap[selectedProduct] || 0;
+            const saleAmount = quantity * itemPrice;
+            let currentTodaySale = parseInt(todaySaleMetric.textContent.replace('₹', '').replace(/,/g, ''));
+            todaySaleMetric.textContent = '₹' + (currentTodaySale + saleAmount).toLocaleString('en-IN');
+
 
             // Close the modal after a delay
             setTimeout(() => {

@@ -18,10 +18,10 @@ body {
     min-height: 100vh;
 }
 
-/* Sidebar (Copied from dashboard.css — DO NOT CHANGE) */
+/* Sidebar (Soft Purple Theme) */
 .sidebar {
     width: 250px;
-    background: linear-gradient(180deg, #2c3e50 0%, #34495e 100%);
+    background: linear-gradient(180deg, #8e7cc3 0%, #a18fcf 100%);
     color: white;
     padding: 15px 0;
     position: fixed;
@@ -32,7 +32,7 @@ body {
 
 .logo {
     padding: 0 20px 15px;
-    border-bottom: 1px solid #4a6572;
+    border-bottom: 1px solid #b7a2db;
     margin-bottom: 15px;
 }
 
@@ -54,20 +54,20 @@ body {
     display: flex;
     align-items: center;
     padding: 12px 20px;
-    color: #bdc3c7;
+    color: #ddd6f7;
     text-decoration: none;
     transition: all 0.3s ease;
 }
 
 .nav-link:hover {
-    background-color: #34495e;
+    background-color: #a18fcf;
     color: white;
 }
 
 .nav-item.active .nav-link {
-    background-color: #3498db;
+    background-color: #b7a2db;
     color: white;
-    border-left: 4px solid #2980b9;
+    border-left: 4px solid #8e7cc3;
 }
 
 .nav-icon {
@@ -90,7 +90,7 @@ body {
     overflow-y: auto;
 }
 
-/* Section Card */
+/* Section Card (For the table) */
 .section-card {
     background: white;
     padding: 25px;
@@ -99,71 +99,87 @@ body {
     margin-bottom: 30px;
 }
 
-/* Inventory Header with Button */
+/* Inventory Header (No Card/Background) */
 .inventory-header {
     display: flex;
-    justify-content: space-between;
+    justify-content: flex-start;
     align-items: center;
-    margin-bottom: 20px;
+    margin-bottom: 25px; /* Spacing below the title */
 }
 
 .inventory-header h3 {
-    font-size: 1.2rem;
+    font-size: 1.8rem;
     color: #2c3e50;
     font-weight: 600;
-    border-bottom: 2px solid #ecf0f1;
-    padding-bottom: 10px;
+    padding-bottom: 0;
 }
 
-/* Add Product Button */
-.add-product-btn {
-    padding: 10px 20px;
-    background: #3498db;
-    color: white;
-    border: none;
-    border-radius: 8px;
-    font-size: 0.95rem;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.3s ease;
-}
-
-.add-product-btn:hover {
-    background: #2980b9;
-    transform: translateY(-2px);
-}
-
-/* Inventory Table */
+/* --- Inventory Table --- */
 .inventory-table {
     width: 100%;
+    table-layout: fixed; /* Crucial for controlling column width */
     border-collapse: collapse;
 }
 
 .inventory-table thead {
-    background-color: #3498db;
+    background-color: #8e7cc3;
     color: white;
 }
 
-.inventory-table th, 
+.inventory-table th,
 .inventory-table td {
     padding: 14px 16px;
-    text-align: left;
+    text-align: center; /* Center alignment for all content */
     border-bottom: 1px solid #ecf0f1;
     font-size: 0.95rem;
 }
+
+/* Column Widths for Equal Spacing (100% / 6 columns) */
+.inventory-table .col-id,
+.inventory-table th:nth-child(1),
+.inventory-table td:nth-child(1) { width: 16.666%; } 
+
+.inventory-table .col-name,
+.inventory-table th:nth-child(2),
+.inventory-table td:nth-child(2) { width: 16.666%; } 
+
+.inventory-table .col-category,
+.inventory-table th:nth-child(3),
+.inventory-table td:nth-child(3) { width: 16.666%; }
+
+.inventory-table .col-stock,
+.inventory-table th:nth-child(4),
+.inventory-table td:nth-child(4) { width: 16.666%; } 
+
+.inventory-table .col-price,
+.inventory-table th:nth-child(5),
+.inventory-table td:nth-child(5) { width: 16.666%; } 
+
+.inventory-table .col-status,
+.inventory-table th:nth-child(6),
+.inventory-table td:nth-child(6) { 
+    width: 16.668%; 
+} 
 
 .inventory-table tbody tr:hover {
     background-color: #f9f9f9;
 }
 
-/* Status Styles */
-.status {
+/* --- Status Button Styles --- */
+.status-btn {
+    border: none;
     padding: 6px 12px;
     border-radius: 6px;
     font-weight: 600;
     font-size: 0.85rem;
+    cursor: pointer;
+    transition: background-color 0.2s;
+    /* max-width helps keep the badge compact in the centered cell */
+    max-width: 150px; 
+    display: inline-block; /* Required if the parent is centered */
 }
 
+/* Status Colors */
 .status.in-stock {
     background: #e8f5e8;
     color: #27ae60;
@@ -171,55 +187,18 @@ body {
 
 .status.low-stock {
     background: #fff8e1;
-    color: #f39c12;
+    color: #efba65;
 }
 
 .status.out-stock {
     background: #ffebee;
     color: #e74c3c;
 }
-
-/* Responsive */
-@media (max-width: 1024px) {
-    .sidebar {
-        width: 200px;
-    }
-    .main-content {
-        margin-left: 200px;
-    }
+.status-btn:hover {
+    opacity: 0.8;
 }
 
-@media (max-width: 768px) {
-    .dashboard-container {
-        flex-direction: column;
-    }
-    .sidebar {
-        width: 100%;
-        height: auto;
-        position: relative;
-    }
-    .main-content {
-        margin-left: 0;
-        padding: 20px;
-    }
-    .nav-menu {
-        display: flex;
-        justify-content: space-around;
-    }
-    .nav-item {
-        margin-bottom: 0;
-    }
-    .nav-link {
-        flex-direction: column;
-        padding: 10px;
-        text-align: center;
-    }
-    .nav-icon {
-        margin-bottom: 5px;
-    }
-}
-
-/* Modal Styles */
+/* --- Modal Styles --- */
 .modal {
     display: none;
     position: fixed;
@@ -237,8 +216,8 @@ body {
     margin: 10% auto;
     padding: 30px;
     border-radius: 12px;
-    width: 40%;
-    max-width: 600px;
+    width: 90%;
+    max-width: 500px; 
     box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
     position: relative;
 }
@@ -258,7 +237,7 @@ body {
     color: #7f8c8d;
 }
 
-.close-btn {
+.close-btn-new {
     color: #aaa;
     float: right;
     font-size: 28px;
@@ -268,15 +247,21 @@ body {
     right: 25px;
 }
 
-.close-btn:hover,
-.close-btn:focus {
+.close-btn-new:hover,
+.close-btn-new:focus {
     color: #333;
     text-decoration: none;
     cursor: pointer;
 }
 
 /* Form Styles */
+.form-group-row {
+    display: flex;
+    gap: 20px;
+}
+
 .form-group {
+    flex: 1;
     margin-bottom: 15px;
 }
 
@@ -294,27 +279,18 @@ body {
     border-radius: 8px;
     font-size: 1rem;
     transition: border-color 0.3s ease;
+    text-align: center; /* Center text in modal inputs */
 }
 
 .form-group input:focus {
     outline: none;
-    border-color: #3498db;
+    border-color: #8e7cc3;
 }
 
-.form-group-row {
-    display: flex;
-    justify-content: space-between;
-    gap: 20px;
-}
-
-.form-group-row .form-group {
-    flex: 1;
-}
-
-.add-product-modal-btn {
+.update-status-modal-btn {
     width: 100%;
     padding: 12px;
-    background: #3498db;
+    background: #8e7cc3;
     color: white;
     border: none;
     border-radius: 8px;
@@ -322,9 +298,10 @@ body {
     font-weight: 600;
     cursor: pointer;
     transition: background 0.3s ease, transform 0.3s ease;
+    margin-top: 20px;
 }
 
-.add-product-modal-btn:hover {
-    background: #2980b9;
+.update-status-modal-btn:hover {
+    background: #6b5a7d;
     transform: translateY(-2px);
 }

@@ -1,73 +1,94 @@
 document.addEventListener('DOMContentLoaded', (event) => {
-    // Modal open/close
-    const modal = document.getElementById("productModal");
-    const openModalBtn = document.querySelector(".add-product-btn"); 
-    const closeModalBtn = document.querySelector(".close-btn"); 
+    const statusModal = document.getElementById("statusModal");
+    const closeModalBtn = document.querySelector(".close-btn-new"); 
+    const inventoryTableBody = document.getElementById("inventoryTableBody");
+    let currentRow = null; // To hold the table row being edited
 
-    // Open modal
-    openModalBtn.addEventListener('click', () => {
-        modal.style.display = "block";
-    });
+    // --- Utility Function to Determine Status ---
+    function getStatusData(currentStock, minStock) {
+        if (currentStock <= 0) {
+            return { text: "Out of Stock", class: "out-stock" };
+        } else if (currentStock < minStock) {
+            return { text: "Low Stock", class: "low-stock" };
+        } else {
+            return { text: "In Stock", class: "in-stock" };
+        }
+    }
 
-    // Close modal when 'x' is clicked
-    closeModalBtn.addEventListener('click', () => {
-        modal.style.display = "none";
-    });
+    // --- Modal Open/Close Logic ---
+    const closeModal = () => {
+        statusModal.style.display = "none";
+        document.getElementById("statusForm").reset();
+        currentRow = null;
+    };
 
-    // Close modal when clicking outside of it
+    closeModalBtn.addEventListener('click', closeModal);
+
     window.addEventListener('click', (event) => {
-        if (event.target === modal) {
-            modal.style.display = "none";
+        if (event.target === statusModal) {
+            closeModal();
         }
     });
 
-    // Handle form submission
-    document.getElementById("productForm").addEventListener("submit", function(e) {
+    // --- Status Button Click Handler (Opens Modal) ---
+    inventoryTableBody.addEventListener('click', (e) => {
+        const button = e.target.closest('.status-btn');
+        if (!button) return;
+
+        const row = button.closest('tr');
+        currentRow = row;
+        
+        const productId = row.querySelector('td:first-child').textContent;
+        const currentStock = row.querySelector('td[data-stock]').getAttribute('data-stock');
+        const minStock = row.getAttribute('data-min-stock');
+
+        // Set modal data
+        document.getElementById('modalProductId').textContent = `Update Stock for ${productId}`;
+        document.getElementById('currentProductId').value = productId;
+        document.getElementById('currentStockDisplay').value = currentStock;
+        document.getElementById('currentMinStock').value = minStock;
+        document.getElementById('stockAdjustment').focus();
+
+        statusModal.style.display = "block";
+    });
+
+
+    // --- Form Submission (Stock Update Logic) ---
+    document.getElementById("statusForm").addEventListener("submit", function(e) {
         e.preventDefault();
 
-        // Get input values from the form
-        const name = document.getElementById("productName").value;
-        const category = document.getElementById("category").value;
-        const price = document.getElementById("price").value;
-        const stock = parseInt(document.getElementById("stock").value);
-        const minStock = parseInt(document.getElementById("minStock").value);
+        if (!currentRow) return;
 
-        // Get the table body
-        const table = document.querySelector(".inventory-table tbody");
-        const row = document.createElement("tr");
+        const productId = document.getElementById('currentProductId').value;
+        const currentStock = parseInt(document.getElementById('currentStockDisplay').value);
+        const minStock = parseInt(document.getElementById('currentMinStock').value);
+        const adjustment = parseInt(document.getElementById('stockAdjustment').value);
 
-        // Status calculation
-        let statusText = "";
-        let statusClass = "";
-        if (stock <= 0) {
-            statusText = "Out of Stock";
-            statusClass = "out-stock";
-        } else if (stock < minStock) {
-            statusText = "Low Stock";
-            statusClass = "low-stock";
-        } else {
-            statusText = "In Stock";
-            statusClass = "in-stock";
+        if (isNaN(adjustment)) {
+            alert("Please enter a valid number for stock adjustment.");
+            return;
         }
 
-        // Generate a simple, unique ID for the new product
-        const newProductId = `#${Math.floor(Math.random() * 1000) + 100}`;
+        const newStock = currentStock + adjustment;
+        const statusButton = currentRow.querySelector('.status-btn');
+        const stockCell = currentRow.querySelector('td[data-stock]');
+        
+        // 1. Update the Stock value in the table
+        stockCell.textContent = newStock;
+        stockCell.setAttribute('data-stock', newStock);
 
-        // Create the new table row's content
-        row.innerHTML = `
-            <td>${newProductId}</td>
-            <td>${name}</td>
-            <td>${category}</td>
-            <td>${stock}</td>
-            <td>₹${price}</td>
-            <td><span class="status ${statusClass}">${statusText}</span></td>
-        `;
+        // 2. Determine the new status automatically
+        const newStatus = getStatusData(newStock, minStock);
 
-        // Add the new row to the table
-        table.appendChild(row);
+        // 3. Update the Status Button's appearance and data
+        statusButton.textContent = newStatus.text;
+        statusButton.setAttribute('data-status-code', newStatus.class);
+        
+        // Remove old status classes and add the new one
+        statusButton.classList.remove('in-stock', 'low-stock', 'out-stock');
+        statusButton.classList.add(newStatus.class);
 
-        // Reset the form and close the modal
-        this.reset();
-        modal.style.display = "none";
+        closeModal();
+        alert(`Stock for ${productId} updated successfully. New Stock: ${newStock}. Status: ${newStatus.text}`);
     });
 });
