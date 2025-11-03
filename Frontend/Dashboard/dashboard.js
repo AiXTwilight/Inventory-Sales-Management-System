@@ -1,5 +1,4 @@
 // frontend/Dashboard/dashboard.js
-
 document.addEventListener('DOMContentLoaded', async () => {
   const API_BASE = "http://127.0.0.1:8000/api";
   const primaryPurple = "#8e7cc3";
@@ -18,17 +17,73 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
   }
 
+  // Calculate % change compared to previous month
+  function calculatePercentageChange(current, previous) {
+    if (!previous || previous === 0) return 0;
+    return ((current - previous) / previous) * 100;
+  }
+
   async function updateDashboard() {
     const data = await fetchDashboardData();
     if (!data) return;
 
-    // === METRICS ===
     const m = data.metrics;
+    const monthlySales = data.monthly_sales || [];
+    const lastMonthIdx = new Date().getMonth() - 1;
+    const prevMonthSales = monthlySales[lastMonthIdx > 0 ? lastMonthIdx : 0];
+    const prevMonthRevenue = prevMonthSales || 0;
+
+    // === CALCULATE PERCENT CHANGES ===
+    const salesChange = calculatePercentageChange(m.total_sales, prevMonthSales);
+    const revenueChange = calculatePercentageChange(m.todays_sales_total, prevMonthRevenue);
+
+    // === METRICS ===
     document.getElementById("total-products-sold").textContent = m.total_products_sold.toLocaleString("en-IN");
     document.getElementById("total-sales").textContent = "₹" + m.total_sales.toLocaleString("en-IN");
-    document.getElementById("todays-revenue").textContent = "₹" + m.total_sales.toLocaleString("en-IN");
+    document.getElementById("todays-revenue").textContent = "₹" + m.todays_sales_total.toLocaleString("en-IN");
     document.getElementById("todays-sale").textContent = "₹" + m.todays_sales_total.toLocaleString("en-IN");
     document.getElementById("products-sold-today").textContent = m.todays_sales_count.toLocaleString("en-IN");
+
+    // === UPDATE CHANGE PERCENTAGES (with arrow indicators and messages) ===
+function setChangeDisplay(element, changeValue, type) {
+  if (!isFinite(changeValue)) {
+    element.textContent = "(No data)";
+    element.className = "metric-change";
+    return;
+  }
+
+  let arrow = "";
+  let text = "";
+  let cssClass = "";
+
+  if (changeValue <= -100) {
+    arrow = "↓";
+    if (type === "revenue") {
+      text = "100%";
+    } else {
+      text = "100%";
+    }
+    cssClass = "metric-change negative";
+  } else if (changeValue > 0) {
+    arrow = "↑";
+    text = `${changeValue.toFixed(1)}%`;
+    cssClass = "metric-change positive";
+  } else if (changeValue < 0) {
+    arrow = "↓";
+    text = `${Math.abs(changeValue).toFixed(1)}%`;
+    cssClass = "metric-change negative";
+  } else {
+    text = "0%";
+    cssClass = "metric-change";
+  }
+
+  element.innerHTML = `${arrow} ${text}`;
+  element.className = cssClass;
+}
+
+// Apply for both metrics
+setChangeDisplay(document.getElementById("sales-change"), salesChange, "sales");
+setChangeDisplay(document.getElementById("revenue-change"), revenueChange, "revenue");
 
     // === RECENT PURCHASES ===
     const purchaseList = document.getElementById("recent-purchases");
@@ -53,7 +108,8 @@ document.addEventListener('DOMContentLoaded', async () => {
       item.innerHTML = `
         <span class="product-rank">${idx + 1}</span>
         <span class="product-name">${p.product_name}</span>
-        <span class="product-sales">${p.units_sold} units</span>`;
+        <span class="product-sales">${p.units_sold} units</span>
+        <span class="product-rating">⭐ ${p.reviews ?? 0}</span>`;
       topList.appendChild(item);
     });
 
@@ -73,24 +129,25 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
 
     // === CHARTS ===
-    updateCharts(data.monthly_sales);
+    updateCharts(data.monthly_sales, data.metrics.total_products_sold);
   }
 
-  function updateCharts(monthlySales) {
+  // === CHART UPDATER ===
+  function updateCharts(monthlySales, totalProductsSold) {
     const salesCtx = document.getElementById("salesChart").getContext("2d");
     const productCtx = document.getElementById("productChart").getContext("2d");
 
-    // Destroy existing charts if any (to prevent overlap)
+    // Destroy existing charts to prevent overlap
     if (window.salesChartInstance) window.salesChartInstance.destroy();
     if (window.productChartInstance) window.productChartInstance.destroy();
 
-    // --- Sales Trend ---
+    // --- Sales Trend Chart ---
     window.salesChartInstance = new Chart(salesCtx, {
       type: "line",
       data: {
         labels: ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"],
         datasets: [{
-          label: "Sales (₹)",
+          label: "Monthly Sales (₹)",
           data: monthlySales,
           borderColor: primaryPurple,
           backgroundColor: veryLightPurple,
@@ -102,24 +159,36 @@ document.addEventListener('DOMContentLoaded', async () => {
       options: {
         responsive: true,
         maintainAspectRatio: false,
-        plugins: { legend: { display: false } }
+        plugins: { legend: { display: false } },
+        scales: { y: { beginAtZero: true } }
       }
     });
 
-    // --- Product Performance ---
+    // --- Product Performance Trend (Products Sold per Month) ---
+    const monthlyProductsSold = monthlySales.map(v => v / 1000); // rough normalization for trend visualization
     window.productChartInstance = new Chart(productCtx, {
       type: "bar",
       data: {
-        labels: ["Product A", "Product B", "Product C", "Product D", "Product E"],
+        labels: ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"],
         datasets: [{
-          label: "Units Sold",
-          data: monthlySales.slice(0, 5),
-          backgroundColor: [primaryPurple, lightPurple, primaryPurple, lightPurple, primaryPurple],
-          borderWidth: 1
+          label: "Products Sold (in 1000s)",
+          data: monthlyProductsSold,
+          backgroundColor: lightPurple,
+          borderColor: primaryPurple,
+          borderWidth: 1.5,
         }]
       },
-      options: { responsive: true, maintainAspectRatio: false }
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: { y: { beginAtZero: true } }
+      }
     });
+
+    // Set chart visibility
+    document.getElementById("salesChart").style.display = activeChart === "sales" ? "block" : "none";
+    document.getElementById("productChart").style.display = activeChart === "products" ? "block" : "none";
   }
 
   // === CHART TOGGLE HANDLERS ===
@@ -133,7 +202,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
   });
 
-  // Initial load + auto refresh
+  // === INITIAL LOAD ===
   await updateDashboard();
   setInterval(updateDashboard, 30000);
 });

@@ -9,6 +9,7 @@
 </head>
 <body>
   <div class="dashboard-container">
+    <!-- Sidebar -->
     <nav class="sidebar">
       <div class="logo"><h2>RetailDash</h2></div>
       <ul class="nav-menu">
@@ -33,6 +34,7 @@
       </ul>
     </nav>
 
+    <!-- Main Content -->
     <main class="main-content">
       <div class="page-header">
         <div class="header-left">
@@ -41,7 +43,7 @@
         </div>
       </div>
 
-      <!-- Metrics Row -->
+      <!-- === Top Metrics === -->
       <div class="top-row" id="metrics">
         <div class="metric-card">
           <div class="metric-icon">📦</div>
@@ -53,14 +55,14 @@
           <div class="metric-icon">💰</div>
           <h3>Total Sales</h3>
           <p class="metric-value" id="total-sales">--</p>
-          <span class="metric-change" id="sales-change">--</span>
+          <span class="metric-change" id="sales-change">--%</span>
         </div>
 
         <div class="metric-card">
           <div class="metric-icon">📈</div>
           <h3>Today's Revenue</h3>
           <p class="metric-value" id="todays-revenue">--</p>
-          <span class="metric-change" id="revenue-change">--</span>
+          <span class="metric-change" id="revenue-change">--%</span>
         </div>
 
         <div class="metric-card alert">
@@ -76,8 +78,9 @@
         </div>
       </div>
 
-      <!-- Recent Purchases -->
+      <!-- === Middle Row === -->
       <div class="middle-row">
+        <!-- Recent Purchases -->
         <div class="section-card">
           <h3>Recent Purchases</h3>
           <div class="purchase-list" id="recent-purchases">
@@ -94,8 +97,9 @@
         </div>
       </div>
 
-      <!-- Charts and Alerts -->
+      <!-- === Bottom Row === -->
       <div class="bottom-row">
+        <!-- Charts Section -->
         <div class="chart-card chart-section">
           <div class="chart-header">
             <h3>Performance Analytics</h3>
@@ -105,7 +109,7 @@
             </div>
           </div>
           <div class="chart-container">
-            <canvas id="salesChart" class="chart"></canvas>
+            <canvas id="salesChart" class="chart active"></canvas>
             <canvas id="productChart" class="chart"></canvas>
           </div>
         </div>
