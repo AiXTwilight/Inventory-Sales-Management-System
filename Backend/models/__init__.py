@@ -1,3 +1,3 @@
-from Backend.models.schema1_models import *
-from Backend.models.schema2_models import *
-from Backend.models.schema3_models import *
+from .schema1_models import *
+from .schema2_models import *
+from .schema3_models import *
