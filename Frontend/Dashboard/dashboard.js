@@ -24,6 +24,11 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 
   async function updateDashboard() {
+
+    if (localStorage.getItem("dashboardNeedsRefresh") === "true") {
+    console.log("🔄 Refreshing dashboard after inventory update...");
+    localStorage.removeItem("dashboardNeedsRefresh");
+  }
     const data = await fetchDashboardData();
     if (!data) return;
 

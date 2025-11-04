@@ -305,3 +305,42 @@ body {
     background: #6b5a7d;
     transform: translateY(-2px);
 }
+
+/* ====== STOCK STATUS COLORS ====== */
+
+.status-btn {
+  border: none;
+  border-radius: 6px;
+  padding: 6px 14px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+}
+
+/* In Stock → Green */
+.status-btn.in-stock {
+  background-color: #d4edda;
+  color: #27ae60;
+  border: 1px solid #c3e6cb;
+}
+
+/* Low Stock → Amber/Yellow */
+.status-btn.low-stock {
+  background-color: #fff3cd;
+  color: #efba65;
+  border: 1px solid #ffeeba;
+}
+
+/* Out of Stock → Red */
+.status-btn.out-stock {
+  background-color: #f8d7da;
+  color: #e74c3c;
+  border: 1px solid #f5c6cb;
+}
+
+/* Hover effects */
+.status-btn:hover {
+  transform: scale(1.05);
+  opacity: 0.9;
+}
