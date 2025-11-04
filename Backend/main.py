@@ -4,36 +4,38 @@ from Backend.database import engine, Base
 from Backend.routes import parameters
 from fastapi.middleware.cors import CORSMiddleware
 
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Startup
+    print("🚀 Starting up RetailDash backend...")
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
     print("✅ Database connected and models loaded!")
 
-    yield  # Application runs here
+    yield
 
-    # Shutdown
     await engine.dispose()
     print("🛑 Database connection closed!")
 
+
 app = FastAPI(
-    title="Real-Time Data API",
-    description="Backend service for real-time charts and parameters",
-    version="1.0",
-    lifespan=lifespan
+    title="RetailDash API",
+    description="Backend service for Dashboard, Inventory & Retail Management",
+    version="1.0.0",
+    lifespan=lifespan,
 )
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # or list of your front-end origins
+    allow_origins=["*"],  # Change later to ["http://127.0.0.1:5500"] for security
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
+# Routers
 app.include_router(parameters.router)
 
 @app.get("/")
-def root():
+async def root():
     return {"message": "Backend running successfully 🚀"}

@@ -95,18 +95,17 @@ const stockUpdateContent = `
 
 // 5. Product Hold
 const productHoldContent = `
-    <p style="color:#9b59b6; margin-bottom: 20px;">Reserve a product for a specific customer or pending transaction.</p>
     <div class="form-group">
         <label for="holdProductId">Product ID</label>
         <input type="text" id="holdProductId" class="modal-input-full" placeholder="Enter product ID">
     </div>
     <div class="form-group">
-        <label for="customerName">Customer Name/Reference</label>
-        <input type="text" id="customerName" class="modal-input-full" placeholder="Enter customer name">
-    </div>
-    <div class="form-group">
         <label for="holdQuantity">Quantity to Hold</label>
         <input type="number" id="holdQuantity" value="1" min="1">
+    </div>
+        <div class="form-group">
+        <label for="UnholdQuantity">Quantity to Unhold</label>
+        <input type="number" id="unholdQuantity" value="1" min="1">
     </div>
     <button class="modal-submit-btn" onclick="alert('Product Hold for ID: ' + document.getElementById('holdProductId').value + '. Customer: ' + document.getElementById('customerName').value); closeModal();">Place Hold</button>
 `;

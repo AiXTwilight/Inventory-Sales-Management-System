@@ -1,6 +1,5 @@
 import datetime
-
-from sqlalchemy import ARRAY, DateTime, PrimaryKeyConstraint, String
+from sqlalchemy import DateTime, PrimaryKeyConstraint, String
 from sqlalchemy.orm import Mapped, mapped_column
 from ..database import Base
 
@@ -11,7 +10,7 @@ class AdminInfo(Base):
         {'schema': 'Admins'}
     )
 
-    admin_id: Mapped[str] = mapped_column(String(5), primary_key=True)
-    admin_email: Mapped[str] = mapped_column(String, nullable=False)
-    password: Mapped[list[str]] = mapped_column(ARRAY(String(length=255)), nullable=False)
-    created_at: Mapped[datetime.datetime] = mapped_column(DateTime(True), nullable=False)
+    admin_id: Mapped[str] = mapped_column(String(10), primary_key=True)  
+    admin_email: Mapped[str] = mapped_column(String(255), nullable=False, unique=True) 
+    password: Mapped[str] = mapped_column(String(255), nullable=False)  
+    created_at: Mapped[datetime.datetime] = mapped_column(DateTime(timezone=True), nullable=False)

@@ -1,134 +1,114 @@
-// Helper function to show a specific form and hide others
-function showForm(formId) {
-    const forms = document.querySelectorAll('.auth-form');
-    forms.forEach(form => {
-        // Instant non-smooth toggle using classes defined in rm.css
-        form.classList.remove('active-form');
-        form.classList.add('hidden-form');
-    });
+document.addEventListener('DOMContentLoaded', function () {
+    const API_BASE = "http://127.0.0.1:8000/api";
 
-    const targetForm = document.getElementById(formId);
-    if (targetForm) {
-        targetForm.classList.remove('hidden-form');
-        targetForm.classList.add('active-form');
+    function showForm(formId) {
+        document.querySelectorAll('.auth-form').forEach(form => {
+            form.classList.remove('active-form');
+            form.classList.add('hidden-form');
+        });
+        const target = document.getElementById(formId);
+        if (target) {
+            target.classList.remove('hidden-form');
+            target.classList.add('active-form');
+        }
     }
-}
 
-// Helper function to switch tab buttons visual state
-function setActiveTab(tabName) {
-    const tabButtons = document.querySelectorAll('.tab-btn');
-    tabButtons.forEach(btn => btn.classList.remove('active'));
-    
-    const activeBtn = document.querySelector(`.tab-btn[data-tab="${tabName}"]`);
-    if(activeBtn) activeBtn.classList.add('active');
-}
+    function setActiveTab(tabName) {
+        document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+        const activeBtn = document.querySelector(`.tab-btn[data-tab="${tabName}"]`);
+        if (activeBtn) activeBtn.classList.add('active');
+    }
 
-document.addEventListener('DOMContentLoaded', function() {
-    const tabButtons = document.querySelectorAll('.tab-btn');
-    const tabButtonsContainer = document.querySelector('.tab-buttons');
-    
-    // Get all form/view elements by their IDs
+    function isValidEmail(email) {
+        return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+    }
+
+    function isStrongPassword(password) {
+    // Must be 8–12 chars, include letter, number, and symbol
+    return /^(?=.*[A-Za-z])(?=.*\d)(?=.*[!@#$%^&*(),.?":{}|<>]).{8,12}$/.test(password);
+    }
+
     const loginForm = document.getElementById('loginForm');
     const registerForm = document.getElementById('registerForm');
     const verificationForm = document.getElementById('verificationForm');
-    const forgotPasswordView = document.getElementById('forgotPasswordView');
-    
-    // Get all interactive elements
-    const forgotPasswordLink = document.getElementById('forgotPasswordLink');
-    const backToLoginLink = document.getElementById('backToLogin');
-    const sendResetLinkBtn = document.getElementById('sendResetLinkBtn');
-    const goToLoginBtn = document.getElementById('goToLoginBtn'); 
-    
-    // 0. Initialize the view to Login
-    setActiveTab('login'); 
+    const goToLoginBtn = document.getElementById('goToLoginBtn');
+    const tabButtonsContainer = document.querySelector('.tab-buttons');
 
-    // --- Tab Switching Logic ---
-    tabButtons.forEach(button => {
-        button.addEventListener('click', function() {
-            const targetTab = this.getAttribute('data-tab');
-            
-            setActiveTab(targetTab);
-            
-            if (targetTab === 'login') {
-                showForm('loginForm');
-            } else if (targetTab === 'register') {
+    // Initialize default view
+    setActiveTab('login');
+    showForm('loginForm');
+
+    // Tab switching
+    document.querySelectorAll('.tab-btn').forEach(button => {
+        button.addEventListener('click', function () {
+            const tab = this.dataset.tab;
+            setActiveTab(tab);
+            if (tab === 'login') showForm('loginForm');
+            else if (tab === 'register') {
                 showForm('registerForm');
-                // Reset form fields when switching to Register
-                registerForm.reset(); 
+                registerForm.reset();
             }
         });
     });
 
-    // --- 1. Register Submission ---
-    registerForm.addEventListener('submit', function(event) {
+    // Register
+    registerForm.addEventListener('submit', async function (event) {
         event.preventDefault();
-        
-        const email = document.getElementById('regEmail').value;
-        const password = document.getElementById('regPassword').value;
+        const email = document.getElementById('regEmail').value.trim();
+        const password = document.getElementById('regPassword').value.trim();
 
-        // Simulate unique ID generation
-        const uniqueId = Math.floor(100000 + Math.random() * 900000); 
+        if (!isValidEmail(email)) return alert("❌ Invalid email address.");
+        if (!isStrongPassword(password)) {
+            alert("❌ Password must be alphanumeric, include one special symbol, and be 8–12 characters long.");
+            return;
+        }
 
-        console.log(`Registration submitted for: ${email}. Simulated Unique ID: ${uniqueId}`);
+        try {
+            const res = await fetch(`${API_BASE}/register_admin`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ email, password }),
+            });
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.detail || "Registration failed");
 
-        alert(`Registration successful! Check your email (${email}) for your Unique ID: ${uniqueId}. This ID and your password are required for login.`);
-        
-        tabButtonsContainer.style.display = 'none';
-        
-        showForm('verificationForm');
-        registerForm.reset();
-    });
-    
-    // --- 2. Go to Login Button after Registration Success ---
-    goToLoginBtn.addEventListener('click', function() {
-        tabButtonsContainer.style.display = 'flex';
-        setActiveTab('login');
-        showForm('loginForm');
-    });
-
-
-    // --- 3. Login Submission (Redirects to POS) ---
-    loginForm.addEventListener('submit', function(event) {
-        event.preventDefault();
-
-        const uniqueId = document.getElementById('loginUniqueId').value;
-        const password = document.getElementById('loginPassword').value;
-
-        if (uniqueId && password) {
-            console.log(`Attempting login with Unique ID: ${uniqueId}`);
-            
-            // Final Redirection to POS Interface (Silent)
-            window.location.href = './pos.html'; 
-        } else {
-             alert('Please enter your Unique ID and password.');
+            alert(`✅ ${data.message}`);
+            tabButtonsContainer.style.display = 'none';
+            showForm('verificationForm');
+        } catch (err) {
+            alert(`❌ ${err.message}`);
         }
     });
 
-    // --- 4. Forgot Password Flow ---
-    forgotPasswordLink.addEventListener('click', function(event) {
-        event.preventDefault();
-        tabButtonsContainer.style.display = 'none';
-        showForm('forgotPasswordView');
-    });
-
-    backToLoginLink.addEventListener('click', function(event) {
-        event.preventDefault();
+    goToLoginBtn.addEventListener('click', () => {
         tabButtonsContainer.style.display = 'flex';
         setActiveTab('login');
         showForm('loginForm');
     });
 
-    sendResetLinkBtn.addEventListener('click', function() {
-        const resetEmail = document.getElementById('resetEmail').value;
-        if (resetEmail) {
-            alert(`Password reset link sent to ${resetEmail}! Please check your email.`);
-            
-            // After sending link, go back to login
-            tabButtonsContainer.style.display = 'flex';
-            setActiveTab('login');
-            showForm('loginForm');
-        } else {
-            alert('Please enter your email address.');
+    // Login
+    loginForm.addEventListener('submit', async function (event) {
+        event.preventDefault();
+        const adminId = document.getElementById('loginUniqueId').value.trim();
+        const password = document.getElementById('loginPassword').value.trim();
+
+        if (!adminId || !password) return alert("⚠️ Enter Admin ID and password.");
+
+        try {
+            const res = await fetch(`${API_BASE}/login_admin`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ admin_id: adminId, password }),
+            });
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.detail || "Login failed");
+
+            alert("✅ Login successful! Redirecting...");
+            localStorage.setItem("admin_id", data.admin_id);
+            localStorage.setItem("admin_email", data.email);
+            window.location.href = "./pos.html";
+        } catch (err) {
+            alert(`❌ ${err.message}`);
         }
     });
 });

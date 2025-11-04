@@ -54,6 +54,7 @@
                         <button class="tab-btn" data-tab="register">Register</button>
                     </div>
                     
+                    <!-- LOGIN FORM -->
                     <form id="loginForm" class="auth-form active-form">
                         <div class="form-group">
                             <label for="loginUniqueId">Unique ID</label>
@@ -63,15 +64,12 @@
                             <label for="loginPassword">Password</label>
                             <input type="password" id="loginPassword" placeholder="Enter your password" required>
                         </div>
-                        
                         <div class="auth-action-group">
                             <button type="submit" class="auth-submit-btn">Sign In</button>
-                            <p class="forgot-password-link">
-                                <a href="#" id="forgotPasswordLink">Forgot Password?</a>
-                            </p>
                         </div>
                     </form>
                     
+                    <!-- REGISTER FORM -->
                     <form id="registerForm" class="auth-form hidden-form">
                         <div class="form-group">
                             <label for="regEmail">Email Address</label>
@@ -86,31 +84,19 @@
                         </div>
                     </form>
 
+                    <!-- VERIFICATION -->
                     <form id="verificationForm" class="auth-form hidden-form">
-                        <p class="verification-message">Registration complete! Check your email for your **Unique ID** which is required to log in.</p>
+                        <p class="verification-message">
+                            Registration complete! Check your email for your <strong>Unique ID</strong> required for login.
+                        </p>
                         <button type="button" class="auth-submit-btn" id="goToLoginBtn">Go to Login</button>
                     </form>
 
-                    <div id="forgotPasswordView" class="auth-form hidden-form">
-                        <p class="verification-message">Enter your email to receive a password reset link.</p>
-                        <div class="form-group">
-                            <label for="resetEmail">Email Address</label>
-                            <input type="email" id="resetEmail" placeholder="Enter your email" required>
-                        </div>
-                        <div class="auth-action-group">
-                            <button type="button" class="auth-submit-btn" id="sendResetLinkBtn">Send Reset Link</button>
-                        </div>
-                        <p class="auth-footer-text">
-                            <a href="#" id="backToLogin">Back to Login</a>
-                        </p>
-                    </div>
-                    
                     <p class="auth-footer-text">This system is for authorized personnel only.</p>
                 </div>
             </div>
-            </main>
+        </main>
     </div>
-    
     <script src="rm.js"></script>
 </body>
 </html>
