@@ -256,3 +256,36 @@ async def login_admin(data: LoginAdmin, db: AsyncSession = Depends(get_db)):
     if not admin or not pwd_context.verify(data.password, admin.password):
         raise HTTPException(status_code=401, detail="Invalid Admin ID or password.")
     return {"message": "✅ Login successful", "admin_id": admin.admin_id, "email": admin.admin_email}
+
+# =====================================================
+# 🧾 POS PRODUCT LIST (with supplier)
+# =====================================================
+@router.get("/pos_products")
+async def get_pos_products(db: AsyncSession = Depends(get_db)):
+    """
+    Returns ALL product data for POS system, including supplier.
+    Ordered by product_id ascending.
+    """
+    try:
+        # Explicitly order and fetch all
+        result = await db.execute(
+            select(models.ProductInfo).order_by(models.ProductInfo.product_id)
+        )
+        products = result.scalars().unique().all()  # <- ensure unique rows
+
+        return {
+            "products": [
+                {
+                    "product_id": p.product_id,
+                    "product_name": p.product_name,
+                    "price": p.price,
+                    "stock": p.stock,
+                    "supplier": getattr(p, "supplier", "-") or "-"
+                }
+                for p in products
+            ]
+        }
+
+    except Exception as e:
+        print("❌ POS fetch error:", e)
+        raise HTTPException(status_code=500, detail="Error fetching POS products")

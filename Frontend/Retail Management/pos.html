@@ -47,7 +47,6 @@
             </div>
 
             <div class="action-card-grid">
-                
                 <div class="action-card" id="addProductCard">
                     <div class="card-icon">➕</div>
                     <h3 class="card-title">Add New Product</h3>
@@ -77,7 +76,6 @@
                     <h3 class="card-title">Product Hold / Unhold</h3>
                     <p class="card-description">Hold or Unhold product.</p>
                 </div>
-                
             </div>
             
             <section class="panel product-list-panel">
@@ -96,33 +94,31 @@
                             </tr>
                         </thead>
                         <tbody id="inventoryTableBody">
-                            <tr><td>#201</td><td>Wireless Earbuds</td><td>&#x20B9; 7,499</td><td>245</td><td>QuickTech</td></tr>
-                            <tr><td>#202</td><td>Smart Watch</td><td>&#x20B9; 9,999</td><td>189</td><td>SmartChec</td></tr>
-                            <tr><td>#203</td><td>Fitness Tracker</td><td>&#x20B9; 1,499</td><td>156</td><td>FitLife</td></tr>
-                            <tr><td>#204</td><td>Laptop Charger</td><td>&#x20B9; 3,499</td><td>70</td><td>Edevice</td></tr>
-                            <tr><td>#205</td><td>Tablet (10 inch)</td><td>&#x20B9; 12,999</td><td>134</td><td>NextGen</td></tr>
-                            <tr><td>#206</td><td>Bluetooth Speaker</td><td>&#x20B9; 1,999</td><td>98</td><td>SoundFlow</td></tr>
-                            <tr><td>#207</td><td>Phone Case (iPhone)</td><td>&#x20B9; 499</td><td>450</td><td>CovrAll</td></tr>
-                            <tr><td>#208</td><td>Monitor (27 inch)</td><td>&#x20B9; 19,999</td><td>30</td><td>ViewMax</td></tr>
+                            <!-- 🟢 CHANGE #1: remove hardcoded <tr> items -->
+                            <tr>
+                                <td colspan="5" style="text-align:center; color:#888;">
+                                    Loading products...
+                                </td>
+                            </tr>
                         </tbody>
                     </table>
                 </div>
             </section>
-
         </main>
     </div>
     
+    <!-- Modal -->
     <div id="actionModal" class="modal-overlay">
         <div class="modal-content">
             <div class="modal-header">
                 <h2 id="modalTitle"></h2>
                 <button class="close-btn" onclick="closeModal()">×</button>
             </div>
-            <div id="modalBody" class="modal-body">
-                </div>
+            <div id="modalBody" class="modal-body"></div>
         </div>
     </div>
-    
+
+    <!-- 🟢 CHANGE #2: Load JS at the end to ensure DOM is ready -->
     <script src="pos.js"></script>
 </body>
 </html>
