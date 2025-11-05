@@ -1,9 +1,8 @@
-# Backend/routes/parameters.py
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Body
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, func
+from sqlalchemy import select, desc
 from passlib.context import CryptContext
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel, EmailStr, Field
 from datetime import datetime, timedelta
 import random, string, re, os
 from Backend.database import get_db
@@ -11,6 +10,7 @@ from Backend import models
 from sendgrid import SendGridAPIClient
 from sendgrid.helpers.mail import Mail
 from dotenv import load_dotenv
+from sqlalchemy.exc import IntegrityError
 
 # =====================================================
 # INITIAL SETUP
@@ -66,8 +66,16 @@ class LoginAdmin(BaseModel):
     admin_id: str
     password: str
 
+class AddProductRequest(BaseModel):
+    product_id: str | None = Field(default=None)
+    product_name: str
+    category: str
+    price: float
+    stock: int
+    supplier: str | None = "-"
+
 # =====================================================
-# 🧾 INVENTORY LIST ENDPOINT (SORTED)
+# 🧾 INVENTORY LIST ENDPOINT (SORTED BY STOCK STATUS)
 # =====================================================
 @router.get("/product_info")
 async def get_all_products(db: AsyncSession = Depends(get_db)):
@@ -75,7 +83,6 @@ async def get_all_products(db: AsyncSession = Depends(get_db)):
     result = await db.execute(select(models.ProductInfo))
     products = result.scalars().all()
 
-    # Define sort order: Out of Stock (critical) → Low Stock → In Stock
     def stock_priority(p):
         if p.stock == 0:
             return 0  # 🔴 Critical
@@ -109,7 +116,6 @@ async def get_dashboard(db: AsyncSession = Depends(get_db)):
     products = product_result.scalars().all()
     transactions = transaction_result.scalars().all()
 
-    # === BASIC METRICS ===
     total_sales = sum(t.product_price or 0 for t in transactions)
     total_products_sold = len(transactions)
 
@@ -121,13 +127,11 @@ async def get_dashboard(db: AsyncSession = Depends(get_db)):
     todays_sales_count = len(todays_sales)
     yesterdays_sales_total = sum(t.product_price or 0 for t in yesterdays_sales)
 
-    # === MONTHLY SALES TREND ===
     monthly_sales = [0] * 12
     for t in transactions:
         if t.date_time:
             monthly_sales[t.date_time.month - 1] += t.product_price or 0
 
-    # === TOP SELLING PRODUCTS ===
     product_sales = {}
     for t in transactions:
         if t.product_name:
@@ -142,29 +146,23 @@ async def get_dashboard(db: AsyncSession = Depends(get_db)):
             "reviews": getattr(product_obj, "reviews", 0) if product_obj else 0
         })
 
-    # === STOCK ALERTS (RED + YELLOW ONLY) ===
     stock_alerts = []
     for p in products:
         if p.stock == 0:
-            level = "critical"  # 🔴 Out of Stock
+            level = "critical"
         elif p.stock < 10:
-            level = "warning"   # 🟡 Low Stock
+            level = "warning"
         else:
-            continue  # 🟢 In Stock — skip
-
+            continue
         stock_alerts.append({
             "product_name": p.product_name,
             "stock": p.stock,
             "level": level
         })
-
-    # Sort: critical first, then warning
     stock_alerts.sort(key=lambda x: {"critical": 0, "warning": 1}[x["level"]])
 
-    # === RECENT PURCHASES ===
     recent_purchases = sorted(transactions, key=lambda t: t.date_time or datetime.min, reverse=True)[:5]
 
-    # === RETURN DATA ===
     return {
         "metrics": {
             "total_products_sold": total_products_sold,
@@ -222,7 +220,6 @@ async def update_product_stock(product_id: str, new_stock: int, db: AsyncSession
 # =====================================================
 @router.post("/register_admin")
 async def register_admin(data: RegisterAdmin, db: AsyncSession = Depends(get_db)):
-    """Register new admin with unique ID and SendGrid email."""
     if not verify_password_strength(data.password):
         raise HTTPException(
             status_code=400,
@@ -258,34 +255,96 @@ async def login_admin(data: LoginAdmin, db: AsyncSession = Depends(get_db)):
     return {"message": "✅ Login successful", "admin_id": admin.admin_id, "email": admin.admin_email}
 
 # =====================================================
-# 🧾 POS PRODUCT LIST (with supplier)
+# 🧾 POS PRODUCT LIST (Sorted by ID)
 # =====================================================
 @router.get("/pos_products")
 async def get_pos_products(db: AsyncSession = Depends(get_db)):
-    """
-    Returns ALL product data for POS system, including supplier.
-    Ordered by product_id ascending.
-    """
     try:
-        # Explicitly order and fetch all
-        result = await db.execute(
-            select(models.ProductInfo).order_by(models.ProductInfo.product_id)
-        )
-        products = result.scalars().unique().all()  # <- ensure unique rows
-
+        result = await db.execute(select(models.ProductInfo).order_by(models.ProductInfo.product_id.asc()))
+        products = result.scalars().all()
         return {
             "products": [
                 {
                     "product_id": p.product_id,
                     "product_name": p.product_name,
+                    "category": p.category,
                     "price": p.price,
                     "stock": p.stock,
-                    "supplier": getattr(p, "supplier", "-") or "-"
-                }
-                for p in products
+                    "supplier": getattr(p, "supplier", "-") or "-",
+                    "stock_status": p.stock_status
+                } for p in products
             ]
         }
-
     except Exception as e:
         print("❌ POS fetch error:", e)
         raise HTTPException(status_code=500, detail="Error fetching POS products")
+
+# =====================================================
+# ➕ ADD NEW PRODUCT (POS)
+# =====================================================
+@router.post("/add_product")
+async def add_product(data: AddProductRequest, db: AsyncSession = Depends(get_db)):
+    """
+    Adds a new product to POS.
+    - Uses given product_id if provided, else auto-generates sequential ID.
+    - Validates stock (≥10) and price (>0).
+    """
+    try:
+        product_id = (data.product_id or "").strip()
+        name = data.product_name.strip()
+        category = data.category.strip()
+        supplier = (data.supplier or "-").strip()
+        price = float(data.price)
+        stock = int(data.stock)
+
+        # --- VALIDATIONS ---
+        if not name or not category:
+            raise HTTPException(status_code=400, detail="Product Name and Category are required.")
+        if stock < 10:
+            raise HTTPException(status_code=400, detail="Stock must be at least 10.")
+        if price <= 0:
+            raise HTTPException(status_code=400, detail="Price must be greater than 0.")
+
+        # --- AUTO-GENERATE ID ---
+        if not product_id:
+            result = await db.execute(select(models.ProductInfo).order_by(desc(models.ProductInfo.product_id)))
+            last_product = result.scalars().first()
+            if last_product and last_product.product_id[1:].isdigit():
+                next_id = int(last_product.product_id[1:]) + 1
+            else:
+                next_id = 1
+            product_id = f"P{next_id:03d}"
+        else:
+            existing = await db.execute(select(models.ProductInfo).where(models.ProductInfo.product_id == product_id))
+            if existing.scalar_one_or_none():
+                raise HTTPException(status_code=400, detail=f"Product ID '{product_id}' already exists.")
+
+        # --- STOCK STATUS ---
+        stock_status = "In Stock" if stock >= 10 else "Low Stock"
+
+        # --- SAVE NEW PRODUCT ---
+        new_product = models.ProductInfo(
+            product_id=product_id,
+            product_name=name,
+            category=category,
+            supplier=supplier,
+            price=price,
+            stock=stock,
+            stock_status=stock_status,
+            created_at=datetime.now(),
+            reviews=0
+        )
+
+        db.add(new_product)
+        await db.commit()
+        await db.refresh(new_product)
+
+        return {"message": f"✅ Product '{name}' added successfully!", "product_id": product_id}
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        print("❌ Error adding product:", e)
+        raise HTTPException(status_code=500, detail=str(e))

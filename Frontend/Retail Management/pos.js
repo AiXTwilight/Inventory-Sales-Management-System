@@ -3,6 +3,7 @@
 // =============================
 
 const API_BASE = "http://127.0.0.1:8000/api";
+let allProducts = []; // Global for filtering and refresh
 
 // --- Modal Control ---
 function openModal(title, contentHTML) {
@@ -17,30 +18,41 @@ function closeModal() {
 
 // --- Content Definitions ---
 const addProductContent = `
-    <p style="color:#7f8c8d; margin-bottom: 20px;">Enter product details to add to inventory</p>
+    <p style="color:#7f8c8d; margin-bottom: 20px;">Fill product details below to add to inventory.</p>
+
+    <div class="form-group">
+        <label for="addProductId">Product ID (optional)</label>
+        <input type="text" id="addProductId" class="modal-input-full" placeholder="Leave blank for auto ID">
+    </div>
+
     <div class="form-group">
         <label for="addProductName">Product Name</label>
-        <input type="text" id="addProductName" class="modal-input-full" placeholder="Enter product name">
+        <input type="text" id="addProductName" class="modal-input-full" placeholder="Enter product name" required>
     </div>
+
     <div class="form-group">
         <label for="addProductCategory">Category</label>
-        <input type="text" id="addProductCategory" class="modal-input-full" placeholder="Enter product category">
+        <input type="text" id="addProductCategory" class="modal-input-full" placeholder="Enter category" required>
     </div>
+
+    <div class="form-group">
+        <label for="addProductSupplier">Supplier</label>
+        <input type="text" id="addProductSupplier" class="modal-input-full" placeholder="Enter supplier name (optional)">
+    </div>
+
     <div class="input-row">
         <div class="form-group">
             <label for="addProductPrice">Price (₹)</label>
-            <input type="number" id="addProductPrice" value="0" min="0">
+            <input type="number" id="addProductPrice" value="0" min="0" step="0.01">
         </div>
+
         <div class="form-group">
             <label for="addProductStock">Stock</label>
-            <input type="number" id="addProductStock" value="0" min="0">
-        </div>
-        <div class="form-group">
-            <label for="addProductMinStock">Min Stock</label>
-            <input type="number" id="addProductMinStock" value="5" min="0">
+            <input type="number" id="addProductStock" value="10" min="10">
         </div>
     </div>
-    <button class="modal-submit-btn" onclick="alert('Adding Product: ' + document.getElementById('addProductName').value); closeModal();">Add Product</button>
+
+    <button class="modal-submit-btn" id="confirmAddProductBtn">Add Product</button>
 `;
 
 const removeProductContent = `
@@ -104,81 +116,137 @@ const productHoldContent = `
         <input type="number" id="holdQuantity" value="1" min="1">
     </div>
     <div class="form-group">
-        <label for="UnholdQuantity">Quantity to Unhold</label>
+        <label for="unholdQuantity">Quantity to Unhold</label>
         <input type="number" id="unholdQuantity" value="1" min="1">
     </div>
     <button class="modal-submit-btn" onclick="alert('Product Hold for ID: ' + document.getElementById('holdProductId').value); closeModal();">Place Hold</button>
 `;
 
 // =============================
-// DOM Logic
+// GLOBAL TABLE FUNCTIONS
+// =============================
+
+async function loadPosProducts() {
+    const tableBody = document.getElementById('inventoryTableBody');
+    try {
+        const response = await fetch(`${API_BASE}/pos_products`);
+        if (!response.ok) throw new Error("Failed to fetch product data");
+
+        const data = await response.json();
+        allProducts = data.products || [];
+
+        allProducts.sort((a, b) => {
+            const idA = parseInt(a.product_id.replace(/\D/g, "")) || 0;
+            const idB = parseInt(b.product_id.replace(/\D/g, "")) || 0;
+            return idA - idB;
+        });
+
+        renderTable(allProducts);
+    } catch (err) {
+        console.error("❌ Error fetching products:", err);
+        if (tableBody)
+            tableBody.innerHTML = `<tr><td colspan="5" style="color:red; text-align:center;">${err.message}</td></tr>`;
+    }
+}
+
+function renderTable(products) {
+    const tableBody = document.getElementById('inventoryTableBody');
+    if (!products.length) {
+        tableBody.innerHTML = `<tr><td colspan="5" style="text-align:center; color:#888;">No products found.</td></tr>`;
+        return;
+    }
+
+    tableBody.innerHTML = products.map(p => `
+        <tr>
+            <td>#${p.product_id}</td>
+            <td>${p.product_name}</td>
+            <td>₹ ${Number(p.price).toLocaleString()}</td>
+            <td>${p.stock}</td>
+            <td>${p.supplier || "-"}</td>
+        </tr>
+    `).join('');
+}
+
+// =============================
+// DOMContentLoaded
 // =============================
 document.addEventListener('DOMContentLoaded', async function () {
-
-    const tableBody = document.getElementById('inventoryTableBody');
     const searchInput = document.getElementById('productSearch');
-    let allProducts = [];
 
-    // Fetch and populate inventory table
-    async function loadPosProducts() {
-        try {
-            const response = await fetch(`${API_BASE}/pos_products`);
-            if (!response.ok) throw new Error("Failed to fetch product data");
-
-            const data = await response.json();
-
-            // ✅ Extract array properly
-            allProducts = data.products || [];
-
-            renderTable(allProducts);
-        } catch (err) {
-            console.error("❌ Error fetching products:", err);
-            tableBody.innerHTML = `<tr><td colspan="5" style="color:red; text-align:center;">${err.message}</td></tr>`;
-        }
+    if (searchInput) {
+        searchInput.addEventListener('keyup', () => {
+            const q = searchInput.value.trim().toLowerCase();
+            if (q === "") {
+                renderTable(allProducts);
+                return;
+            }
+            const filtered = allProducts.filter(p =>
+                p.product_name.toLowerCase().includes(q) ||
+                p.product_id.toLowerCase().includes(q)
+            );
+            renderTable(filtered);
+        });
     }
 
-    // Render data into table
-    function renderTable(products) {
-        tableBody.innerHTML = products.map(p => `
-            <tr>
-                <td>#${p.product_id}</td>
-                <td>${p.product_name}</td>
-                <td>₹ ${Number(p.price).toLocaleString()}</td>
-                <td>${p.stock}</td>
-                <td>${p.supplier || "-"}</td>
-            </tr>
-        `).join('');
-    }
-
-    // Search filter
-    function filterTable() {
-        const q = searchInput.value.trim().toLowerCase();
-        if (q.length < 5 && q.length !== 0) {
-            renderTable(allProducts);
-            return;
-        }
-        const filtered = allProducts.filter(p =>
-            p.product_name.toLowerCase().includes(q) ||
-            p.product_id.toLowerCase().includes(q)
-        );
-        renderTable(filtered);
-    }
-
-    if (searchInput) searchInput.addEventListener('keyup', filterTable);
-
-    // Card actions
     document.getElementById('addProductCard').addEventListener('click', () => openModal('Add New Product', addProductContent));
     document.getElementById('removeProductCard').addEventListener('click', () => openModal('Remove Product', removeProductContent));
     document.getElementById('changePriceCard').addEventListener('click', () => openModal('Change Price', changePriceContent));
     document.getElementById('updateStockCard').addEventListener('click', () => openModal('Stock Update', stockUpdateContent));
     document.getElementById('productHoldCard').addEventListener('click', () => openModal('Product Hold / Unhold', productHoldContent));
 
-    // Modal close on overlay click
     document.getElementById('actionModal').addEventListener('click', (e) => {
         if (e.target.id === 'actionModal') closeModal();
     });
 
-    // ✅ Initial load + periodic refresh
     await loadPosProducts();
     setInterval(loadPosProducts, 30000);
+});
+
+// =============================
+// ADD PRODUCT HANDLER
+// =============================
+document.addEventListener("click", async function (e) {
+    if (e.target && e.target.id === "confirmAddProductBtn") {
+        const id = document.getElementById("addProductId").value.trim();
+        const name = document.getElementById("addProductName").value.trim();
+        const category = document.getElementById("addProductCategory").value.trim();
+        const price = parseFloat(document.getElementById("addProductPrice").value);
+        const stock = parseInt(document.getElementById("addProductStock").value);
+        const supplier = document.getElementById("addProductSupplier").value.trim();
+
+        if (!name || !category) {
+            alert("❌ Please fill in Product Name and Category.");
+            return;
+        }
+
+        if (isNaN(stock) || stock < 10) {
+            alert("❌ Stock must be at least 10.");
+            return;
+        }
+
+        try {
+            const response = await fetch(`${API_BASE}/add_product`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    product_id: id || null,
+                    product_name: name,
+                    category: category,
+                    price: price,
+                    stock: stock,
+                    supplier: supplier || "-"
+                }),
+            });
+
+            const result = await response.json();
+            if (!response.ok) throw new Error(result.detail || "Failed to add product.");
+
+            alert(`✅ ${result.message}`);
+            closeModal();
+            await loadPosProducts();
+        } catch (err) {
+            console.error("❌ Error adding product:", err);
+            alert(`❌ Error: ${err.message}`);
+        }
+    }
 });
