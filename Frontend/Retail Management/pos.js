@@ -59,32 +59,37 @@ const removeProductContent = `
     <p style="color:#e74c3c; margin-bottom: 20px;">Permanently delete a product entry from the system.</p>
     <div class="form-group">
         <label for="removeProductId">Product ID</label>
-        <input type="text" id="removeProductId" class="modal-input-full" placeholder="Enter ID (e.g., 201)">
+        <input type="text" id="removeProductId" class="modal-input-full" placeholder="Enter ID (e.g., P001)">
     </div>
     <div class="form-group">
-        <label for="removeProductName">Product Name (Confirmation)</label>
-        <input type="text" id="removeProductName" class="modal-input-full" placeholder="Confirm name (optional)">
+        <label for="removeProductName">Product Name (Auto-Fetch)</label>
+        <input type="text" id="removeProductName" class="modal-input-full" placeholder="Will auto-fill..." disabled>
     </div>
-    <button class="modal-submit-btn" style="background-color: #e74c3c;" onclick="alert('Removing Product ID: ' + document.getElementById('removeProductId').value); closeModal();">Confirm Removal</button>
+    <button class="modal-submit-btn" style="background-color: #e74c3c;" id="confirmRemoveProductBtn">
+        Confirm Removal
+    </button>
 `;
 
 const changePriceContent = `
     <p style="color:#f39c12; margin-bottom: 20px;">Update the retail price for an existing product.</p>
+
     <div class="form-group">
         <label for="priceChangeId">Product ID</label>
         <input type="text" id="priceChangeId" class="modal-input-full" placeholder="Enter product ID">
     </div>
+
     <div class="input-row">
         <div class="form-group">
             <label for="oldPrice">Current Price (₹)</label>
-            <input type="text" id="oldPrice" value="Fetching..." disabled>
+            <input type="text" id="oldPrice" value="-" disabled>
         </div>
         <div class="form-group">
             <label for="newPrice">New Price (₹)</label>
             <input type="number" id="newPrice" value="0" min="0">
         </div>
     </div>
-    <button class="modal-submit-btn" onclick="alert('Price Change for ID: ' + document.getElementById('priceChangeId').value + ' to ₹' + document.getElementById('newPrice').value); closeModal();">Update Price</button>
+
+    <button class="modal-submit-btn" id="updatePriceBtn">Update Price</button>
 `;
 
 const stockUpdateContent = `
@@ -100,10 +105,10 @@ const stockUpdateContent = `
         </div>
         <div class="form-group">
             <label for="quantityReceived">Quantity Received</label>
-            <input type="number" id="quantityReceived" value="10" min="1">
+            <input type="number" id="quantityReceived" min="1" placeholder="e.g.(+10 or -10)">
         </div>
     </div>
-    <button class="modal-submit-btn" onclick="alert('Stock Update for ID: ' + document.getElementById('stockUpdateId').value + '. Quantity added: ' + document.getElementById('quantityReceived').value); closeModal();">Apply Stock</button>
+    <button class="modal-submit-btn" id="confirmStockUpdateBtn">Apply Stock</button>
 `;
 
 const productHoldContent = `
@@ -247,6 +252,199 @@ document.addEventListener("click", async function (e) {
         } catch (err) {
             console.error("❌ Error adding product:", err);
             alert(`❌ Error: ${err.message}`);
+        }
+    }
+});
+
+
+// --- Handle Remove Product ---
+document.addEventListener("click", async function (e) {
+    if (e.target && e.target.id === "confirmRemoveProductBtn") {
+        const id = document.getElementById("removeProductId").value.trim();
+        const nameConfirm = document.getElementById("removeProductName").value.trim();
+
+        if (!id) {
+            alert("❌ Please enter a Product ID.");
+            return;
+        }
+
+        try {
+            // 🟡 Step 1: Fetch product details for confirmation
+            const fetchResponse = await fetch(`${API_BASE}/get_product/${id}`);
+            const productData = await fetchResponse.json();
+
+            if (!fetchResponse.ok) throw new Error(productData.detail || "Product not found.");
+
+            const actualName = productData.product_name || "(Unknown)";
+            document.getElementById("removeProductName").value = actualName;
+
+            // 🟠 Step 2: Confirm deletion
+            if (!confirm(`Are you sure you want to permanently delete "${actualName}" (ID: ${id})?`)) {
+                return;
+            }
+
+            // 🔴 Step 3: Proceed with deletion
+            const deleteResponse = await fetch(`${API_BASE}/remove_product/${id}`, {
+                method: "DELETE"
+            });
+
+            const result = await deleteResponse.json();
+            if (!deleteResponse.ok) throw new Error(result.detail || "Failed to delete product.");
+
+            alert(`✅ ${result.message}`);
+            closeModal();
+            await loadPosProducts();
+
+        } catch (err) {
+            console.error("❌ Error removing product:", err);
+            alert(`❌ Error: ${err.message}`);
+        }
+    }
+});
+
+// --- Auto-fetch product name as soon as user types ID ---
+document.addEventListener("input", async function (e) {
+    if (e.target && e.target.id === "removeProductId") {
+        const id = e.target.value.trim();
+        const nameInput = document.getElementById("removeProductName");
+        if (!id) {
+            nameInput.value = "";
+            return;
+        }
+
+        try {
+            const res = await fetch(`${API_BASE}/get_product/${id}`);
+            const data = await res.json();
+            if (res.ok) {
+                nameInput.value = data.product_name || "";
+            } else {
+                nameInput.value = "❌ Not found";
+            }
+        } catch (err) {
+            nameInput.value = "⚠️ Error";
+            console.error("Error fetching product name:", err);
+        }
+    }
+});
+
+
+// --- Handle Price Fetch & Update ---
+document.addEventListener("input", async function (e) {
+    if (e.target && e.target.id === "priceChangeId") {
+        const id = e.target.value.trim();
+        const oldPriceInput = document.getElementById("oldPrice");
+        oldPriceInput.value = "Fetching...";
+
+        if (!id) {
+            oldPriceInput.value = "-";
+            return;
+        }
+
+        try {
+            const response = await fetch(`${API_BASE}/get_product/${id}`);
+            if (!response.ok) throw new Error("Product not found");
+
+            const product = await response.json();
+            oldPriceInput.value = `₹ ${product.price}`;
+        } catch (err) {
+            oldPriceInput.value = "Not Found";
+        }
+    }
+});
+
+document.addEventListener("click", async function (e) {
+    if (e.target && e.target.id === "updatePriceBtn") {
+        const id = document.getElementById("priceChangeId").value.trim();
+        const newPrice = parseFloat(document.getElementById("newPrice").value);
+
+        if (!id) {
+            alert("❌ Please enter a Product ID.");
+            return;
+        }
+        if (isNaN(newPrice) || newPrice <= 0) {
+            alert("❌ Enter a valid new price greater than 0.");
+            return;
+        }
+
+        try {
+            const response = await fetch(`${API_BASE}/update_price/${id}`, {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(newPrice)
+            });
+
+            const result = await response.json();
+            if (!response.ok) throw new Error(result.detail || "Failed to update price.");
+
+            alert(`✅ ${result.message}`);
+            closeModal();
+            await loadPosProducts();
+        } catch (err) {
+            alert(`❌ Error: ${err.message}`);
+        }
+    }
+});
+
+
+// --- Fetch current stock when product ID entered ---
+document.addEventListener("input", async function (e) {
+    if (e.target && e.target.id === "stockUpdateId") {
+        const id = e.target.value.trim();
+        const stockInput = document.getElementById("currentStock");
+        stockInput.value = "Fetching...";
+
+        if (!id) {
+            stockInput.value = "-";
+            return;
+        }
+
+        try {
+            const response = await fetch(`${API_BASE}/get_product/${id}`);
+            const data = await response.json();
+
+            if (response.ok) {
+                stockInput.value = data.stock;
+            } else {
+                stockInput.value = "❌ Not found";
+            }
+        } catch (err) {
+            stockInput.value = "⚠️ Error";
+            console.error("Error fetching stock:", err);
+        }
+    }
+});
+
+// --- Handle Stock Update (+/-) ---
+document.addEventListener("click", async function (e) {
+    if (e.target && e.target.id === "confirmStockUpdateBtn") {
+        const id = document.getElementById("stockUpdateId").value.trim();
+        const qty = parseInt(document.getElementById("quantityReceived").value);
+
+        if (!id) {
+            alert("❌ Please enter a Product ID.");
+            return;
+        }
+        if (isNaN(qty) || qty === 0) {
+            alert("❌ Enter a non-zero quantity. Positive adds stock, negative removes.");
+            return;
+        }
+
+        try {
+            const response = await fetch(`${API_BASE}/update_stock/${id}`, {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ quantity: qty })
+            });
+
+            const result = await response.json();
+            if (!response.ok) throw new Error(result.detail || "Failed to update stock.");
+
+            alert(`✅ ${result.message}`);
+            closeModal();
+            await loadPosProducts();
+        } catch (err) {
+            console.error("❌ Error updating stock:", err);
+            alert(`❌ ${err.message}`);
         }
     }
 });

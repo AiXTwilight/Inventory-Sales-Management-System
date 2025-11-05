@@ -74,6 +74,9 @@ class AddProductRequest(BaseModel):
     stock: int
     supplier: str | None = "-"
 
+class StockUpdate(BaseModel):
+    quantity: int
+
 # =====================================================
 # 🧾 INVENTORY LIST ENDPOINT (SORTED BY STOCK STATUS)
 # =====================================================
@@ -85,11 +88,11 @@ async def get_all_products(db: AsyncSession = Depends(get_db)):
 
     def stock_priority(p):
         if p.stock == 0:
-            return 0  # 🔴 Critical
+            return 0
         elif p.stock < 10:
-            return 1  # 🟡 Low
+            return 1
         else:
-            return 2  # 🟢 Healthy
+            return 2
 
     products_sorted = sorted(products, key=stock_priority)
 
@@ -106,6 +109,63 @@ async def get_all_products(db: AsyncSession = Depends(get_db)):
     ]
 
 # =====================================================
+# 📦 UPDATE STOCK (Universal + / - Support)
+# =====================================================
+@router.put("/update_stock/{product_id}")
+async def update_stock(
+    product_id: str,
+    payload: StockUpdate,
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Updates product stock for both Inventory and POS.
+    - Positive ➕ adds stock
+    - Negative ➖ subtracts stock
+    - Prevents stock below 0
+    - Updates stock status automatically
+    """
+    try:
+        result = await db.execute(
+            select(models.ProductInfo).where(models.ProductInfo.product_id == product_id)
+        )
+        product = result.scalar_one_or_none()
+        if not product:
+            raise HTTPException(status_code=404, detail=f"Product '{product_id}' not found.")
+
+        qty_change = payload.quantity
+        if qty_change == 0:
+            raise HTTPException(status_code=400, detail="Quantity cannot be 0.")
+
+        new_stock = product.stock + qty_change
+        if new_stock < 0:
+            raise HTTPException(status_code=400, detail="❌ Cannot reduce stock below 0.")
+
+        product.stock = new_stock
+        product.stock_status = (
+            "Out of Stock" if new_stock <= 0
+            else "Low Stock" if new_stock < 10
+            else "In Stock"
+        )
+
+        await db.commit()
+        await db.refresh(product)
+
+        action = "added to" if qty_change > 0 else "removed from"
+        return {
+            "message": f"📦 {abs(qty_change)} units {action} '{product.product_name}'. New stock: {product.stock}",
+            "product_id": product.product_id,
+            "new_stock": product.stock,
+            "stock_status": product.stock_status
+        }
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=str(e))
+
+# =====================================================
 # 📊 DASHBOARD ENDPOINT
 # =====================================================
 @router.get("/dashboard")
@@ -118,7 +178,6 @@ async def get_dashboard(db: AsyncSession = Depends(get_db)):
 
     total_sales = sum(t.product_price or 0 for t in transactions)
     total_products_sold = len(transactions)
-
     today = datetime.now().date()
     yesterday = today - timedelta(days=1)
     todays_sales = [t for t in transactions if t.date_time and t.date_time.date() == today]
@@ -169,14 +228,6 @@ async def get_dashboard(db: AsyncSession = Depends(get_db)):
             "total_sales": total_sales,
             "todays_sales_total": todays_sales_total,
             "todays_sales_count": todays_sales_count,
-            "sales_change_percent": round(
-                ((todays_sales_total - yesterdays_sales_total) / yesterdays_sales_total * 100)
-                if yesterdays_sales_total else 0, 2
-            ),
-            "revenue_change_percent": round(
-                ((total_sales - sum(monthly_sales[:-1])) / sum(monthly_sales[:-1]) * 100)
-                if sum(monthly_sales[:-1]) else 0, 2
-            ),
         },
         "monthly_sales": monthly_sales,
         "top_selling": top_selling,
@@ -192,39 +243,12 @@ async def get_dashboard(db: AsyncSession = Depends(get_db)):
     }
 
 # =====================================================
-# 🧾 INVENTORY STOCK UPDATE
-# =====================================================
-@router.put("/update_stock/{product_id}")
-async def update_product_stock(product_id: str, new_stock: int, db: AsyncSession = Depends(get_db)):
-    """Update product stock and auto-adjust status."""
-    result = await db.execute(select(models.ProductInfo).where(models.ProductInfo.product_id == product_id))
-    product = result.scalar_one_or_none()
-    if not product:
-        raise HTTPException(status_code=404, detail=f"Product {product_id} not found")
-
-    product.stock = new_stock
-    product.stock_status = (
-        "Out of Stock" if new_stock <= 0 else "Low Stock" if new_stock < 10 else "In Stock"
-    )
-    await db.commit()
-    await db.refresh(product)
-    return {
-        "message": f"Stock for {product.product_name} updated",
-        "product_id": product.product_id,
-        "new_stock": product.stock,
-        "stock_status": product.stock_status,
-    }
-
-# =====================================================
 # 👤 ADMIN REGISTER & LOGIN
 # =====================================================
 @router.post("/register_admin")
 async def register_admin(data: RegisterAdmin, db: AsyncSession = Depends(get_db)):
     if not verify_password_strength(data.password):
-        raise HTTPException(
-            status_code=400,
-            detail="Password must be alphanumeric, include one special symbol, and be 8–12 characters long."
-        )
+        raise HTTPException(status_code=400, detail="Password must be alphanumeric, include a special symbol, 8–12 characters long.")
     result = await db.execute(select(models.AdminInfo).where(models.AdminInfo.admin_email == data.email))
     if result.scalar_one_or_none():
         raise HTTPException(status_code=400, detail="Email already registered.")
@@ -255,7 +279,7 @@ async def login_admin(data: LoginAdmin, db: AsyncSession = Depends(get_db)):
     return {"message": "✅ Login successful", "admin_id": admin.admin_id, "email": admin.admin_email}
 
 # =====================================================
-# 🧾 POS PRODUCT LIST (Sorted by ID)
+# 🧾 POS PRODUCT ROUTES
 # =====================================================
 @router.get("/pos_products")
 async def get_pos_products(db: AsyncSession = Depends(get_db)):
@@ -279,16 +303,8 @@ async def get_pos_products(db: AsyncSession = Depends(get_db)):
         print("❌ POS fetch error:", e)
         raise HTTPException(status_code=500, detail="Error fetching POS products")
 
-# =====================================================
-# ➕ ADD NEW PRODUCT (POS)
-# =====================================================
 @router.post("/add_product")
 async def add_product(data: AddProductRequest, db: AsyncSession = Depends(get_db)):
-    """
-    Adds a new product to POS.
-    - Uses given product_id if provided, else auto-generates sequential ID.
-    - Validates stock (≥10) and price (>0).
-    """
     try:
         product_id = (data.product_id or "").strip()
         name = data.product_name.strip()
@@ -297,7 +313,6 @@ async def add_product(data: AddProductRequest, db: AsyncSession = Depends(get_db
         price = float(data.price)
         stock = int(data.stock)
 
-        # --- VALIDATIONS ---
         if not name or not category:
             raise HTTPException(status_code=400, detail="Product Name and Category are required.")
         if stock < 10:
@@ -305,24 +320,18 @@ async def add_product(data: AddProductRequest, db: AsyncSession = Depends(get_db
         if price <= 0:
             raise HTTPException(status_code=400, detail="Price must be greater than 0.")
 
-        # --- AUTO-GENERATE ID ---
         if not product_id:
             result = await db.execute(select(models.ProductInfo).order_by(desc(models.ProductInfo.product_id)))
             last_product = result.scalars().first()
-            if last_product and last_product.product_id[1:].isdigit():
-                next_id = int(last_product.product_id[1:]) + 1
-            else:
-                next_id = 1
+            next_id = int(last_product.product_id[1:]) + 1 if last_product and last_product.product_id[1:].isdigit() else 1
             product_id = f"P{next_id:03d}"
         else:
             existing = await db.execute(select(models.ProductInfo).where(models.ProductInfo.product_id == product_id))
             if existing.scalar_one_or_none():
                 raise HTTPException(status_code=400, detail=f"Product ID '{product_id}' already exists.")
 
-        # --- STOCK STATUS ---
         stock_status = "In Stock" if stock >= 10 else "Low Stock"
 
-        # --- SAVE NEW PRODUCT ---
         new_product = models.ProductInfo(
             product_id=product_id,
             product_name=name,
@@ -346,5 +355,43 @@ async def add_product(data: AddProductRequest, db: AsyncSession = Depends(get_db
     except Exception as e:
         import traceback
         traceback.print_exc()
-        print("❌ Error adding product:", e)
         raise HTTPException(status_code=500, detail=str(e))
+
+@router.get("/get_product/{product_id}")
+async def get_product(product_id: str, db: AsyncSession = Depends(get_db)):
+    result = await db.execute(select(models.ProductInfo).where(models.ProductInfo.product_id == product_id))
+    product = result.scalar_one_or_none()
+    if not product:
+        raise HTTPException(status_code=404, detail=f"Product ID '{product_id}' not found.")
+    return {
+        "product_id": product.product_id,
+        "product_name": product.product_name,
+        "category": product.category,
+        "price": product.price,
+        "stock": product.stock,
+        "supplier": getattr(product, "supplier", "-") or "-",
+        "stock_status": product.stock_status
+    }
+
+@router.delete("/remove_product/{product_id}")
+async def remove_product(product_id: str, db: AsyncSession = Depends(get_db)):
+    result = await db.execute(select(models.ProductInfo).where(models.ProductInfo.product_id == product_id))
+    product = result.scalar_one_or_none()
+    if not product:
+        raise HTTPException(status_code=404, detail=f"Product ID '{product_id}' not found.")
+    await db.delete(product)
+    await db.commit()
+    return {"message": f"🗑️ Product '{product.product_name}' (ID: {product_id}) deleted successfully."}
+
+@router.put("/update_price/{product_id}")
+async def update_price(product_id: str, new_price: float = Body(...), db: AsyncSession = Depends(get_db)):
+    result = await db.execute(select(models.ProductInfo).where(models.ProductInfo.product_id == product_id))
+    product = result.scalar_one_or_none()
+    if not product:
+        raise HTTPException(status_code=404, detail=f"Product ID '{product_id}' not found.")
+    if new_price <= 0:
+        raise HTTPException(status_code=400, detail="Price must be greater than 0.")
+    product.price = new_price
+    await db.commit()
+    await db.refresh(product)
+    return {"message": f"💰 Price for '{product.product_name}' updated successfully.", "product_id": product.product_id, "new_price": product.price}
